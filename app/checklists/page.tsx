@@ -26,15 +26,6 @@ export default async function ChecklistsPage() {
           icon: true,
         },
       },
-      categories: {
-        include: {
-          _count: {
-            select: {
-              items: true,
-            },
-          },
-        },
-      },
       _count: {
         select: {
           items: true,

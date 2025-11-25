@@ -71,8 +71,8 @@ export default async function ChecklistPage({ params }: ChecklistPageProps) {
   const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-6">
           <Link href="/checklists">
             <Button variant="ghost" className="gap-2 mb-4">
@@ -82,14 +82,16 @@ export default async function ChecklistPage({ params }: ChecklistPageProps) {
           </Link>
         </div>
 
-        <ChecklistViewClient
-          checklist={{
-            ...checklist,
-            progress: Math.round(progress),
-            checkedCount,
-            totalCount,
-          }}
-        />
+        <div className="w-full overflow-x-hidden">
+          <ChecklistViewClient
+            checklist={{
+              ...checklist,
+              progress: Math.round(progress),
+              checkedCount,
+              totalCount,
+            }}
+          />
+        </div>
       </div>
     </div>
   );

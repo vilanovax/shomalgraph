@@ -24,12 +24,7 @@ export default async function TemplateEditPage({
   const template = await db.travelChecklistTemplate.findUnique({
     where: { id },
     include: {
-      categories: {
-        include: {
-          items: {
-            orderBy: { order: "asc" },
-          },
-        },
+      items: {
         orderBy: { order: "asc" },
       },
     },

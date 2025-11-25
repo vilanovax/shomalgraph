@@ -64,10 +64,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // بررسی وجود کاربر در دیتابیس
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    if (!user) {
+      console.error("User not found in database:", session.user.id);
+      return NextResponse.json(
+        { success: false, error: "کاربر یافت نشد" },
+        { status: 404 }
+      );
+    }
+
     const body = await request.json();
     const { title, description, icon, travelType, season, items } = body;
 
-    if (!title) {
+    console.log("Received data:", { title, travelType, season, itemsCount: items?.length });
+
+    if (!title || !title.trim()) {
       return NextResponse.json(
         { success: false, error: "عنوان الزامی است" },
         { status: 400 }
@@ -81,20 +97,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // بررسی و پاکسازی آیتم‌ها
+    const validItems = items.filter((item: any) => item.name && item.name.trim());
+    if (validItems.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "حداقل یک آیتم با نام معتبر الزامی است" },
+        { status: 400 }
+      );
+    }
+
     // ایجاد قالب
     const template = await db.travelChecklistTemplate.create({
       data: {
-        title,
-        description: description || null,
-        icon: icon || null,
-        travelType: travelType ? (travelType as ChecklistTravelType) : null,
+        title: title.trim(),
+        description: description?.trim() || null,
+        icon: icon?.trim() || null,
+        travelType: travelType && travelType !== "none" ? (travelType as ChecklistTravelType) : null,
         season: season ? (season as Season) : null,
         isActive: true,
-        createdById: session.user.id,
+        createdById: user.id,
         items: {
-          create: items.map((item: any, index: number) => ({
-            name: item.name,
-            description: item.description || null,
+          create: validItems.map((item: any, index: number) => ({
+            name: item.name.trim(),
+            description: item.description?.trim() || null,
             order: item.order !== undefined ? item.order : index,
             isRequired: item.isRequired || false,
           })),
@@ -114,8 +139,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Error creating template:", error);
+    const errorMessage = error instanceof Error ? error.message : "خطا در ایجاد قالب";
+    console.error("Error details:", {
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { success: false, error: "خطا در ایجاد قالب" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

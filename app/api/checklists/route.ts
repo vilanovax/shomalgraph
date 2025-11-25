@@ -101,6 +101,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // بررسی وجود کاربر در دیتابیس
+    let user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    // اگر کاربر با id پیدا نشد، با phone جستجو می‌کنیم
+    if (!user && session.user.phone) {
+      user = await db.user.findUnique({
+        where: { phone: session.user.phone },
+        select: { id: true },
+      });
+      
+      // اگر هنوز پیدا نشد، کاربر جدید ایجاد می‌کنیم
+      if (!user) {
+        console.log("User not found, creating new user with phone:", session.user.phone);
+        try {
+          user = await db.user.create({
+            data: {
+              phone: session.user.phone,
+              name: session.user.name || null,
+              role: session.user.role || "USER",
+            },
+            select: { id: true },
+          });
+          console.log("User created successfully:", user.id);
+        } catch (createError) {
+          console.error("Error creating user:", createError);
+          return NextResponse.json(
+            { success: false, error: "خطا در ایجاد کاربر" },
+            { status: 500 }
+          );
+        }
+      }
+    }
+
+    if (!user) {
+      console.error("User not found in database:", {
+        id: session.user.id,
+        phone: session.user.phone,
+      });
+      return NextResponse.json(
+        { success: false, error: "کاربر یافت نشد. لطفاً دوباره وارد شوید." },
+        { status: 404 }
+      );
+    }
+
     const body = await request.json();
     const {
       title,
@@ -141,7 +188,7 @@ export async function POST(request: NextRequest) {
     // ایجاد چک‌لیست
     const checklist = await db.travelChecklist.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         title,
         description: description || null,
         templateId: templateId || null,
@@ -196,8 +243,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Error creating checklist:", error);
+    const errorMessage = error instanceof Error ? error.message : "خطا در ایجاد چک‌لیست";
+    console.error("Error details:", {
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { success: false, error: "خطا در ایجاد چک‌لیست" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

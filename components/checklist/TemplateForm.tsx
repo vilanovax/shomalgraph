@@ -44,7 +44,7 @@ export function TemplateForm({ template }: TemplateFormProps) {
     title: template?.title || "",
     description: template?.description || "",
     icon: template?.icon || "",
-    travelType: template?.travelType || "",
+    travelType: template?.travelType || "none",
     season: template?.season || "ALL",
     isActive: template?.isActive ?? true,
   });
@@ -105,25 +105,49 @@ export function TemplateForm({ template }: TemplateFormProps) {
         : "/api/admin/checklist-templates";
       const method = template ? "PUT" : "POST";
 
+      const payload = {
+        title: formData.title,
+        description: formData.description || undefined,
+        icon: formData.icon || undefined,
+        travelType: formData.travelType && formData.travelType !== "none" ? formData.travelType : undefined,
+        season: formData.season || undefined,
+        items: items.map((item, index) => ({
+          name: item.name,
+          description: item.description || undefined,
+          order: index,
+          isRequired: item.isRequired,
+        })),
+      };
+
+      if (template) {
+        (payload as any).isActive = formData.isActive;
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          items: items.map((item, index) => ({
-            name: item.name,
-            description: item.description || undefined,
-            order: index,
-            isRequired: item.isRequired,
-          })),
-        }),
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        // اگر response JSON نیست، متن خطا را بخوان
+        let errorMessage = `خطا: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // اگر JSON نیست، متن response را بخوان
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
 
       const data = await response.json();
 
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.error || "خطا در ذخیره قالب");
       }
 
@@ -192,16 +216,16 @@ export function TemplateForm({ template }: TemplateFormProps) {
             <div className="space-y-2">
               <Label>نوع سفر (اختیاری)</Label>
               <Select
-                value={formData.travelType}
+                value={formData.travelType || "none"}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, travelType: value || null })
+                  setFormData({ ...formData, travelType: value === "none" ? null : value })
                 }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="انتخاب کنید" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">هیچکدام</SelectItem>
+                  <SelectItem value="none">هیچکدام</SelectItem>
                   <SelectItem value="FAMILY_WITH_KIDS">خانواده با بچه</SelectItem>
                   <SelectItem value="NATURE">طبیعت</SelectItem>
                   <SelectItem value="BEACH">ساحل</SelectItem>

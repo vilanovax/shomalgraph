@@ -33,6 +33,7 @@ export function ChecklistSelector() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [customTitle, setCustomTitle] = useState("");
   const [customDescription, setCustomDescription] = useState("");
 
@@ -135,8 +136,13 @@ export function ChecklistSelector() {
                     setIsDialogOpen(open);
                     if (open) {
                       setSelectedTemplateId(template.id);
+                      setSelectedTemplate(template);
+                      // استفاده از عنوان template به عنوان پیش‌فرض
+                      setCustomTitle(template.title);
+                      setCustomDescription(template.description || "");
                     } else {
                       setSelectedTemplateId("");
+                      setSelectedTemplate(null);
                       setCustomTitle("");
                       setCustomDescription("");
                     }
@@ -172,14 +178,19 @@ export function ChecklistSelector() {
                         نام چک‌لیست خود را تعیین کنید
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4">
+                      <div className="space-y-4">
                       <div className="space-y-2">
                         <Label>عنوان چک‌لیست *</Label>
                         <Input
                           value={customTitle}
                           onChange={(e) => setCustomTitle(e.target.value)}
-                          placeholder="مثلاً: سفر به رامسر"
+                          placeholder={selectedTemplate?.title || "مثلاً: سفر به رامسر"}
                         />
+                        {selectedTemplate && (
+                          <p className="text-xs text-muted-foreground">
+                            عنوان از قالب استفاده شده است. می‌توانید آن را تغییر دهید.
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>توضیحات (اختیاری)</Label>

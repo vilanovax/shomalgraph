@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChecklistProgress } from "@/components/checklist/ChecklistProgress";
 import { ChecklistItemCard } from "@/components/checklist/ChecklistItemCard";
 import Link from "next/link";
-import { Edit, Calendar, Plus } from "lucide-react";
+import { Edit, Calendar, Plus, LayoutGrid, List, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { fa } from "date-fns/locale";
 import {
@@ -29,6 +29,7 @@ interface ChecklistViewClientProps {
     id: string;
     title: string;
     description?: string | null;
+    notes?: string | null;
     travelType?: string | null;
     createdAt: Date;
     template?: {
@@ -42,7 +43,6 @@ interface ChecklistViewClientProps {
       description?: string | null;
       isRequired: boolean;
       isChecked: boolean;
-      notes?: string | null;
       order: number;
     }>;
     progress: number;
@@ -62,6 +62,23 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
   const [editingItemDescription, setEditingItemDescription] = useState("");
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+  const [checklistNotes, setChecklistNotes] = useState(checklist.notes || "");
+  
+  // حالت نمایشی ساده/کامل - ذخیره در local storage
+  const [isMinimalView, setIsMinimalView] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(`checklist-view-${checklist.id}`);
+      return saved === "minimal";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`checklist-view-${checklist.id}`, isMinimalView ? "minimal" : "full");
+    }
+  }, [isMinimalView, checklist.id]);
 
   const handleToggleItem = async (itemId: string, isChecked: boolean) => {
     try {
@@ -100,18 +117,15 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
     }
   };
 
-  const handleEditNotes = async (itemId: string, notes: string) => {
+  const handleUpdateChecklistNotes = async () => {
     try {
-      const response = await fetch(
-        `/api/checklists/${checklist.id}/items/${itemId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ notes }),
-        }
-      );
+      const response = await fetch(`/api/checklists/${checklist.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ notes: checklistNotes }),
+      });
 
       const data = await response.json();
 
@@ -119,15 +133,13 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
         throw new Error(data.error || "خطا در ذخیره یادداشت");
       }
 
-      // به‌روزرسانی state
       setChecklist((prev) => ({
         ...prev,
-        items: prev.items.map((item) =>
-          item.id === itemId ? { ...item, notes: data.data.notes } : item
-        ),
+        notes: data.data.notes,
       }));
+      setIsNotesDialogOpen(false);
     } catch (error) {
-      console.error("Error updating notes:", error);
+      console.error("Error updating checklist notes:", error);
       alert("خطا در ذخیره یادداشت");
     }
   };
@@ -254,21 +266,21 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
   const sortedItems = [...checklist.items].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex-1 min-w-0">
           {checklist.template && (
             <Badge variant="secondary" className="text-xs mb-2">
               از قالب: {checklist.template.title}
             </Badge>
           )}
-          <h1 className="text-3xl font-black mb-2">{checklist.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-black mb-2 break-words">{checklist.title}</h1>
           {checklist.description && (
-            <p className="text-muted-foreground">{checklist.description}</p>
+            <p className="text-muted-foreground break-words">{checklist.description}</p>
           )}
           <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
-            <Calendar className="h-4 w-4" />
+            <Calendar className="h-4 w-4 shrink-0" />
             <span>
               {format(new Date(checklist.createdAt), "d MMMM yyyy", {
                 locale: fa,
@@ -276,7 +288,25 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
             </span>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMinimalView(!isMinimalView)}
+            className="gap-2"
+            title={isMinimalView ? "نمایش کامل" : "نمایش ساده"}
+          >
+            {isMinimalView ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsNotesDialogOpen(true)}
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">یادداشت</span>
+          </Button>
           <Button
             variant={isEditMode ? "default" : "outline"}
             size="sm"
@@ -284,35 +314,55 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
             className="gap-2"
           >
             <Edit className="h-4 w-4" />
-            {isEditMode ? "ذخیره" : "ویرایش لیست"}
+            <span className="hidden sm:inline">{isEditMode ? "ذخیره" : "ویرایش لیست"}</span>
+            <span className="sm:hidden">{isEditMode ? "ذخیره" : "ویرایش"}</span>
           </Button>
           <Link href={`/checklists/${checklist.id}/edit`}>
             <Button variant="outline" size="sm" className="gap-2">
               <Edit className="h-4 w-4" />
-              ویرایش جزئیات
+              <span className="hidden sm:inline">ویرایش جزئیات</span>
+              <span className="sm:hidden">جزئیات</span>
             </Button>
           </Link>
         </div>
       </div>
 
+      {/* Notes */}
+      {checklist.notes && !isMinimalView && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              یادداشت
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm whitespace-pre-wrap">{checklist.notes}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle>پیشرفت</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChecklistProgress
-            checkedCount={checklist.checkedCount}
-            totalCount={checklist.totalCount}
-          />
-        </CardContent>
-      </Card>
+      {!isMinimalView && (
+        <Card>
+          <CardHeader>
+            <CardTitle>پیشرفت</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChecklistProgress
+              checkedCount={checklist.checkedCount}
+              totalCount={checklist.totalCount}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Items */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>آیتم‌ها</CardTitle>
+        {!isMinimalView && (
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>آیتم‌ها</CardTitle>
             {isEditMode && (
               <Dialog
                 open={isAddItemDialogOpen}
@@ -376,8 +426,9 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+        )}
+        <CardContent className="overflow-x-hidden">
+          <div className={isMinimalView ? "space-y-0" : "space-y-3"}>
             {sortedItems.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <p>این چک‌لیست هنوز آیتمی ندارد</p>
@@ -393,7 +444,7 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
               </div>
             ) : (
               sortedItems.map((item) => (
-                <div key={item.id}>
+                <div key={item.id} className="w-full overflow-x-hidden">
                   {editingItemId === item.id ? (
                     <Card>
                       <CardContent className="p-4 space-y-3">
@@ -402,18 +453,22 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
                           <Input
                             value={editingItemName}
                             onChange={(e) => setEditingItemName(e.target.value)}
+                            className="w-full"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label>توضیحات</Label>
-                          <Textarea
-                            value={editingItemDescription}
-                            onChange={(e) =>
-                              setEditingItemDescription(e.target.value)
-                            }
-                            rows={2}
-                          />
-                        </div>
+                        {!isMinimalView && (
+                          <div className="space-y-2">
+                            <Label>توضیحات</Label>
+                            <Textarea
+                              value={editingItemDescription}
+                              onChange={(e) =>
+                                setEditingItemDescription(e.target.value)
+                              }
+                              rows={2}
+                              className="w-full"
+                            />
+                          </div>
+                        )}
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="outline"
@@ -432,14 +487,14 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="relative">
+                    <div className="relative w-full overflow-x-hidden">
                       <ChecklistItemCard
                         item={item}
                         onToggle={handleToggleItem}
-                        onEditNotes={handleEditNotes}
                         readOnly={false}
+                        minimal={isMinimalView}
                       />
-                      {isEditMode && (
+                      {isEditMode && !isMinimalView && (
                         <div className="absolute top-2 left-2 flex gap-2">
                           <Button
                             variant="ghost"
@@ -471,6 +526,38 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
           </div>
         </CardContent>
       </Card>
+
+      {/* Notes Dialog */}
+      <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>یادداشت چک‌لیست</DialogTitle>
+            <DialogDescription>
+              یادداشت کلی خود را برای این چک‌لیست بنویسید
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={checklistNotes}
+              onChange={(e) => setChecklistNotes(e.target.value)}
+              placeholder="یادداشت خود را بنویسید..."
+              rows={6}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsNotesDialogOpen(false);
+                  setChecklistNotes(checklist.notes || "");
+                }}
+              >
+                انصراف
+              </Button>
+              <Button onClick={handleUpdateChecklistNotes}>ذخیره</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -30,12 +30,7 @@ export async function GET(
             icon: true,
           },
         },
-        categories: {
-          include: {
-            items: {
-              orderBy: { order: "asc" },
-            },
-          },
+        items: {
           orderBy: { order: "asc" },
         },
       },
@@ -122,12 +117,13 @@ export async function PUT(
       );
     }
 
-    const { title, description, travelType, season, isShared } = body;
+    const { title, description, notes, travelType, season, isShared } = body;
 
     const updateData: any = {};
 
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
+    if (notes !== undefined) updateData.notes = notes;
     if (travelType !== undefined)
       updateData.travelType = travelType as ChecklistTravelType;
     if (season !== undefined) updateData.season = season as Season;
@@ -144,12 +140,7 @@ export async function PUT(
             icon: true,
           },
         },
-        categories: {
-          include: {
-            items: {
-              orderBy: { order: "asc" },
-            },
-          },
+        items: {
           orderBy: { order: "asc" },
         },
       },

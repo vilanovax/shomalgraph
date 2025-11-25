@@ -590,6 +590,7 @@ model TravelChecklist {
   
   title       String
   description String?
+  notes       String?  // یادداشت کلی برای چک‌لیست
   templateId  String?
   template    TravelChecklistTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   
