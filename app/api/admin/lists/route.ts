@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, description, slug, coverImage, keywords } = body;
 
+    console.log("Create list request body:", { title, description, slug, coverImage, keywords });
+
     if (!title || !slug) {
       return NextResponse.json(
         { success: false, error: "عنوان و slug اجباری است" },
@@ -70,15 +72,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // بررسی وجود کاربر در دیتابیس
+    let user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    if (!user) {
+      // اگر کاربر با id پیدا نشد، با phone جستجو می‌کنیم
+      if (session.user.phone) {
+        user = await db.user.findUnique({
+          where: { phone: session.user.phone },
+          select: { id: true },
+        });
+        
+        // اگر هنوز پیدا نشد، کاربر جدید ایجاد می‌کنیم
+        if (!user) {
+          console.log("User not found, creating new user with phone:", session.user.phone);
+          try {
+            user = await db.user.create({
+              data: {
+                phone: session.user.phone,
+                name: session.user.name || null,
+                role: session.user.role || "ADMIN",
+              },
+              select: { id: true },
+            });
+            console.log("User created successfully:", user.id);
+          } catch (createError) {
+            console.error("Error creating user:", createError);
+            return NextResponse.json(
+              { success: false, error: "خطا در ایجاد کاربر" },
+              { status: 500 }
+            );
+          }
+        }
+      }
+    }
+
+    if (!user) {
+      console.error("User not found in database:", {
+        id: session.user.id,
+        phone: session.user.phone,
+      });
+      return NextResponse.json(
+        { success: false, error: "کاربر یافت نشد. لطفاً دوباره وارد شوید." },
+        { status: 404 }
+      );
+    }
+
+    console.log("User found/created:", user.id);
+
     const list = await db.list.create({
       data: {
-        title,
-        description,
-        slug,
-        coverImage,
-        keywords: keywords || [],
+        title: title.trim(),
+        description: description?.trim() || null,
+        slug: slug.trim(),
+        coverImage: coverImage || null,
+        keywords: Array.isArray(keywords) ? keywords : [],
         type: "PUBLIC",
-        createdById: session.user.id,
+        createdById: user.id,
       },
       include: {
         createdBy: {
@@ -104,6 +157,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Error creating list:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "خطا در ایجاد لیست";
 
     if (
       error &&
@@ -118,7 +173,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: "خطا در ایجاد لیست" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, List, Search, Heart, MapPin, UtensilsCrossed } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SeedListsButton } from "./SeedListsButton";
 
 async function getLists() {
   try {
@@ -61,15 +62,18 @@ export default async function ListsPage() {
                 </p>
               </div>
             </div>
-            <Link href="/admin/lists/new">
-              <Button
-                size="lg"
-                className="bg-white text-purple-600 hover:bg-purple-50 shadow-lg hover:shadow-xl transition-all"
-              >
-                <Plus className="ml-2 h-5 w-5" />
-                ایجاد لیست جدید
-              </Button>
-            </Link>
+            <div className="flex items-center gap-3">
+              <SeedListsButton />
+              <Link href="/admin/lists/new">
+                <Button
+                  size="lg"
+                  className="bg-white text-purple-600 hover:bg-purple-50 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <Plus className="ml-2 h-5 w-5" />
+                  ایجاد لیست جدید
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>

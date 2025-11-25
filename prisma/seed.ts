@@ -481,6 +481,84 @@ async function main() {
 
   console.log("✅ 10 مکان گردشگری ایجاد شدند");
 
+  // ایجاد لیست‌های نمونه
+  const allItems = [
+    ...restaurants.map((r) => ({ type: "restaurant" as const, id: r.id })),
+    ...places.map((p) => ({ type: "place" as const, id: p.id })),
+  ];
+
+  // تابع برای انتخاب تصادفی آیتم‌ها
+  const getRandomItems = (count: number) => {
+    const shuffled = [...allItems].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(count, allItems.length));
+  };
+
+  const sampleLists = [
+    {
+      title: "بهترین رستوران‌های ساحلی",
+      description: "مجموعه‌ای از بهترین رستوران‌های کنار دریا در شمال ایران",
+      slug: "best-beach-restaurants",
+      keywords: ["رستوران", "ساحل", "دریا", "غذای دریایی"],
+      itemCount: 5,
+    },
+    {
+      title: "مکان‌های دیدنی چالوس",
+      description: "جاذبه‌های گردشگری و مکان‌های دیدنی شهر چالوس",
+      slug: "chalus-attractions",
+      keywords: ["چالوس", "گردشگری", "دیدنی", "جاذبه"],
+      itemCount: 6,
+    },
+    {
+      title: "رستوران‌های لوکس و مجلل",
+      description: "رستوران‌های با کیفیت و لوکس برای تجربه‌ای خاص",
+      slug: "luxury-restaurants",
+      keywords: ["لوکس", "مجلل", "رستوران", "کیفیت"],
+      itemCount: 4,
+    },
+    {
+      title: "طبیعت و کوهستان",
+      description: "مکان‌های طبیعی و کوهستانی برای علاقه‌مندان به طبیعت",
+      slug: "nature-mountains",
+      keywords: ["طبیعت", "کوهستان", "پیاده‌روی", "طبیعت‌گردی"],
+      itemCount: 7,
+    },
+    {
+      title: "بهترین‌های رامسر",
+      description: "مجموعه‌ای از بهترین رستوران‌ها و مکان‌های گردشگری رامسر",
+      slug: "best-ramsar",
+      keywords: ["رامسر", "بهترین", "گردشگری", "رستوران"],
+      itemCount: 5,
+    },
+  ];
+
+  const createdLists = [];
+
+  for (const listData of sampleLists) {
+    const selectedItems = getRandomItems(listData.itemCount);
+
+    const list = await prisma.list.create({
+      data: {
+        title: listData.title,
+        description: listData.description,
+        slug: listData.slug,
+        keywords: listData.keywords,
+        type: "PUBLIC",
+        createdById: admin.id,
+        items: {
+          create: selectedItems.map((item, index) => ({
+            restaurantId: item.type === "restaurant" ? item.id : null,
+            placeId: item.type === "place" ? item.id : null,
+            order: index,
+          })),
+        },
+      },
+    });
+
+    createdLists.push(list);
+  }
+
+  console.log(`✅ ${createdLists.length} لیست نمونه ایجاد شدند`);
+
   // ایجاد نظرات نمونه
   await prisma.review.createMany({
     data: [
@@ -750,6 +828,7 @@ async function main() {
   console.log(`   🗂️  دسته‌بندی: 2`);
   console.log(`   🍽️  رستوران‌ها: ${restaurants.length}`);
   console.log(`   🏞️  مکان‌های گردشگری: ${places.length}`);
+  console.log(`   📝 لیست‌ها: ${createdLists.length}`);
   console.log(`   ⭐ نظرات: 4`);
   console.log(`   💡 پیشنهادات: 1`);
   console.log(`   📋 قالب‌های چک‌لیست: 3`);

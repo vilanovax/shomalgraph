@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { User, Phone, Crown, LogOut, Settings, Heart, MessageSquare, Edit, ClipboardList } from "lucide-react";
 import Link from "next/link";
-import { ChecklistSelector } from "@/components/checklist/ChecklistSelector";
+import { ProfileChecklists } from "@/components/checklist/ProfileChecklists";
 
 async function getUserStats(userId: string) {
   try {
@@ -181,7 +181,7 @@ export default async function ProfilePage() {
             </Card>
           </Link>
 
-          <ChecklistSelector />
+          <ProfileChecklists />
 
           <form action={async () => {
             "use server";

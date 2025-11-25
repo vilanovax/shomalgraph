@@ -27,7 +27,11 @@ interface Template {
   };
 }
 
-export function ChecklistSelector() {
+interface ChecklistSelectorProps {
+  onChecklistCreated?: () => void;
+}
+
+export function ChecklistSelector({ onChecklistCreated }: ChecklistSelectorProps = {}) {
   const router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +40,7 @@ export function ChecklistSelector() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [customTitle, setCustomTitle] = useState("");
   const [customDescription, setCustomDescription] = useState("");
+  const [isCreatingEmpty, setIsCreatingEmpty] = useState(false);
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -85,16 +90,55 @@ export function ChecklistSelector() {
         throw new Error(data.error || "خطا در ایجاد چک‌لیست");
       }
 
-      router.push(`/checklists/${data.data.id}`);
       setIsDialogOpen(false);
+      if (onChecklistCreated) {
+        onChecklistCreated();
+      } else {
+        router.push(`/checklists/${data.data.id}`);
+      }
     } catch (error) {
       console.error("Error creating checklist:", error);
       alert("خطا در ایجاد چک‌لیست");
     }
   };
 
-  const handleCreateEmpty = () => {
-    router.push("/checklists/new");
+  const handleCreateEmpty = async () => {
+    if (!customTitle.trim()) {
+      alert("عنوان چک‌لیست الزامی است");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/checklists", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: customTitle,
+          description: customDescription || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "خطا در ایجاد چک‌لیست");
+      }
+
+      setIsDialogOpen(false);
+      if (onChecklistCreated) {
+        onChecklistCreated();
+      } else {
+        router.push(`/checklists/${data.data.id}`);
+      }
+      setCustomTitle("");
+      setCustomDescription("");
+      setIsCreatingEmpty(false);
+    } catch (error) {
+      console.error("Error creating checklist:", error);
+      alert("خطا در ایجاد چک‌لیست");
+    }
   };
 
   if (isLoading) {
@@ -109,16 +153,7 @@ export function ChecklistSelector() {
   }
 
   return (
-    <Card className="border-2 hover:border-purple-300 transition-colors">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <ClipboardList className="h-5 w-5 text-purple-600" />
-          </div>
-          <CardTitle>چک‌لیست‌های سفر</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
           چک‌لیست‌های آماده را انتخاب کنید یا یک چک‌لیست جدید ایجاد کنید
         </p>
@@ -226,25 +261,55 @@ export function ChecklistSelector() {
         )}
 
         {/* دکمه ایجاد از صفر */}
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={handleCreateEmpty}
-        >
-          <Plus className="h-4 w-4" />
-          ایجاد چک‌لیست جدید از صفر
-        </Button>
+        {!isCreatingEmpty ? (
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => setIsCreatingEmpty(true)}
+          >
+            <Plus className="h-4 w-4" />
+            ایجاد چک‌لیست جدید از صفر
+          </Button>
+        ) : (
+          <Card className="border-2 border-purple-200">
+            <CardContent className="p-4 space-y-4">
+              <div className="space-y-2">
+                <Label>عنوان چک‌لیست *</Label>
+                <Input
+                  value={customTitle}
+                  onChange={(e) => setCustomTitle(e.target.value)}
+                  placeholder="مثلاً: سفر به رامسر"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>توضیحات (اختیاری)</Label>
+                <Textarea
+                  value={customDescription}
+                  onChange={(e) => setCustomDescription(e.target.value)}
+                  placeholder="توضیحات مختصری..."
+                  rows={2}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsCreatingEmpty(false);
+                    setCustomTitle("");
+                    setCustomDescription("");
+                  }}
+                >
+                  انصراف
+                </Button>
+                <Button onClick={handleCreateEmpty}>
+                  ایجاد چک‌لیست
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* لینک به صفحه لیست چک‌لیست‌ها */}
-        <Button
-          variant="ghost"
-          className="w-full"
-          onClick={() => router.push("/checklists")}
-        >
-          مشاهده همه چک‌لیست‌های من
-        </Button>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 
