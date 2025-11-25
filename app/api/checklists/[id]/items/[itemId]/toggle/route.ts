@@ -47,7 +47,7 @@ export async function POST(
 
     const item = await db.checklistItem.findUnique({
       where: { id: itemId },
-      select: { checklistId: true },
+      select: { checklistId: true, isChecked: true },
     });
 
     if (!item || item.checklistId !== id) {
@@ -57,10 +57,12 @@ export async function POST(
       );
     }
 
+    const newCheckedState = isChecked !== undefined ? isChecked : !item.isChecked;
+
     const updatedItem = await db.checklistItem.update({
       where: { id: itemId },
       data: {
-        isChecked: isChecked !== undefined ? isChecked : !item.isChecked,
+        isChecked: newCheckedState,
       },
     });
 

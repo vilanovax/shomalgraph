@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const travelType = searchParams.get("travelType");
     const search = searchParams.get("search");
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       userId: session.user.id,
     };
 
@@ -148,6 +148,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("User found/created:", user.id);
+
     const body = await request.json();
     const {
       title,
@@ -207,7 +209,7 @@ export async function POST(request: NextRequest) {
                 templateItemId: item.id,
               }))
             : items && Array.isArray(items)
-            ? items.map((item: any, index: number) => ({
+            ? items.map((item: { name: string; description?: string; isRequired?: boolean }, index: number) => ({
                 name: item.name,
                 description: item.description || null,
                 order: item.order !== undefined ? item.order : index,

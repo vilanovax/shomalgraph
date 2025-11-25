@@ -120,7 +120,7 @@ export function TemplateForm({ template }: TemplateFormProps) {
       };
 
       if (template) {
-        (payload as any).isActive = formData.isActive;
+        (payload as Record<string, unknown>).isActive = formData.isActive;
       }
 
       const response = await fetch(url, {

@@ -177,7 +177,7 @@ async function filterPlaces(
   const suitableFor = travelTypeToSuitableFor(travelType);
 
   // اگر suitableFor خالی باشد، همه مکان‌ها را می‌گیریم
-  const whereClause: any = {
+  const whereClause: Record<string, unknown> = {
     isActive: true,
   };
 

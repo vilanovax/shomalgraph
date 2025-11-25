@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChecklistProgress } from "@/components/checklist/ChecklistProgress";
 import { ChecklistItemCard } from "@/components/checklist/ChecklistItemCard";
 import Link from "next/link";
-import { Edit, Calendar, Plus, LayoutGrid, List, FileText } from "lucide-react";
+import { Edit, Calendar, Plus, LayoutGrid, List, FileText, CheckSquare, Square, X } from "lucide-react";
 import { format } from "date-fns";
 import { fa } from "date-fns/locale";
 import {
@@ -66,19 +66,25 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
   const [checklistNotes, setChecklistNotes] = useState(checklist.notes || "");
   
   // حالت نمایشی ساده/کامل - ذخیره در local storage
-  const [isMinimalView, setIsMinimalView] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(`checklist-view-${checklist.id}`);
-      return saved === "minimal";
-    }
-    return false;
-  });
+  // مقدار اولیه همیشه false است تا از hydration mismatch جلوگیری شود
+  const [isMinimalView, setIsMinimalView] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
+  // خواندن از localStorage فقط در کلاینت (بعد از mount)
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    setIsMounted(true);
+    const saved = localStorage.getItem(`checklist-view-${checklist.id}`);
+    if (saved === "minimal") {
+      setIsMinimalView(true);
+    }
+  }, [checklist.id]);
+
+  // ذخیره در localStorage هنگام تغییر
+  useEffect(() => {
+    if (isMounted) {
       localStorage.setItem(`checklist-view-${checklist.id}`, isMinimalView ? "minimal" : "full");
     }
-  }, [isMinimalView, checklist.id]);
+  }, [isMinimalView, checklist.id, isMounted]);
 
   const handleToggleItem = async (itemId: string, isChecked: boolean) => {
     try {
@@ -114,6 +120,58 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
     } catch (error) {
       console.error("Error toggling item:", error);
       alert("خطا در تغییر وضعیت آیتم");
+    }
+  };
+
+  const handleToggleAll = async (isChecked: boolean) => {
+    try {
+      // Toggle همه آیتم‌ها به صورت موازی
+      const promises = checklist.items.map((item) =>
+        fetch(`/api/checklists/${checklist.id}/items/${item.id}/toggle`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ isChecked }),
+        })
+      );
+
+      const responses = await Promise.all(promises);
+      const results = await Promise.all(
+        responses.map((res) => res.json())
+      );
+
+      // بررسی خطا
+      const hasError = results.some((result) => !result.success);
+      if (hasError) {
+        throw new Error("خطا در تغییر وضعیت برخی آیتم‌ها");
+      }
+
+      // دریافت آیتم‌های به‌روزرسانی شده و محاسبه progress
+      const updatedItemsResponse = await fetch(
+        `/api/checklists/${checklist.id}/items`
+      );
+      const updatedItemsData = await updatedItemsResponse.json();
+
+      if (updatedItemsData.success) {
+        const checkedCount = updatedItemsData.data.filter(
+          (item: { isChecked: boolean }) => item.isChecked
+        ).length;
+        const totalCount = updatedItemsData.data.length;
+        const progress =
+          totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
+
+        setChecklist((prev) => ({
+          ...prev,
+          items: updatedItemsData.data,
+          progress: Math.round(progress),
+          checkedCount,
+          totalCount,
+        }));
+      }
+    } catch (error) {
+      console.error("Error toggling all items:", error);
+      alert("خطا در تغییر وضعیت آیتم‌ها");
     }
   };
 
@@ -263,7 +321,13 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
     }
   };
 
-  const sortedItems = [...checklist.items].sort((a, b) => a.order - b.order);
+  // مرتب‌سازی: آیتم‌های چک نشده اول، سپس چک شده‌ها
+  const sortedItems = [...checklist.items].sort((a, b) => {
+    if (a.isChecked === b.isChecked) {
+      return a.order - b.order;
+    }
+    return a.isChecked ? 1 : -1; // چک نشده‌ها اول
+  });
 
   return (
     <div className="space-y-6 w-full overflow-x-hidden">
@@ -343,90 +407,72 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
       )}
 
       {/* Progress */}
-      {!isMinimalView && (
-        <Card>
-          <CardHeader>
-            <CardTitle>پیشرفت</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChecklistProgress
-              checkedCount={checklist.checkedCount}
-              totalCount={checklist.totalCount}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>پیشرفت</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChecklistProgress
+            checkedCount={checklist.checkedCount}
+            totalCount={checklist.totalCount}
+          />
+        </CardContent>
+      </Card>
 
       {/* Items */}
       <Card>
-        {!isMinimalView && (
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>آیتم‌ها</CardTitle>
-            {isEditMode && (
-              <Dialog
-                open={isAddItemDialogOpen}
-                onOpenChange={setIsAddItemDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    افزودن آیتم
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>افزودن آیتم</DialogTitle>
-                    <DialogDescription>
-                      یک آیتم جدید به چک‌لیست اضافه کنید
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>نام آیتم *</Label>
-                      <Input
-                        value={newItemName}
-                        onChange={(e) => setNewItemName(e.target.value)}
-                        placeholder="مثلاً: مسواک"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>توضیحات</Label>
-                      <Textarea
-                        value={newItemDescription}
-                        onChange={(e) => setNewItemDescription(e.target.value)}
-                        placeholder="توضیحات اختیاری..."
-                        rows={2}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="required"
-                        checked={newItemRequired}
-                        onCheckedChange={(checked) =>
-                          setNewItemRequired(checked === true)
-                        }
-                      />
-                      <Label htmlFor="required" className="cursor-pointer">
-                        آیتم ضروری
-                      </Label>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsAddItemDialogOpen(false)}
-                      >
-                        انصراف
-                      </Button>
-                      <Button onClick={handleAddItem}>افزودن</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            {!isMinimalView && <CardTitle>آیتم‌ها</CardTitle>}
+            <div className="flex gap-2">
+              {checklist.items.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const allChecked = checklist.items.every((item) => item.isChecked);
+                    const action = allChecked ? "پاک کردن" : "علامت زدن";
+                    if (
+                      confirm(
+                        `آیا مطمئن هستید که می‌خواهید همه آیتم‌ها را ${action} کنید؟`
+                      )
+                    ) {
+                      await handleToggleAll(!allChecked);
+                    }
+                  }}
+                  className="gap-2"
+                  title={
+                    checklist.items.every((item) => item.isChecked)
+                      ? "پاک کردن همه"
+                      : "علامت زدن همه"
+                  }
+                >
+                  {checklist.items.every((item) => item.isChecked) ? (
+                    <Square className="h-4 w-4" />
+                  ) : (
+                    <CheckSquare className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {checklist.items.every((item) => item.isChecked)
+                      ? "پاک کردن همه"
+                      : "علامت زدن همه"}
+                  </span>
+                </Button>
+              )}
+              {isEditMode && !isMinimalView && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setIsAddItemDialogOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  افزودن آیتم
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
-        )}
         <CardContent className="overflow-x-hidden">
           <div className={isMinimalView ? "space-y-0" : "space-y-3"}>
             {sortedItems.length === 0 ? (
@@ -438,6 +484,7 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
                     className="mt-4"
                     onClick={() => setIsAddItemDialogOpen(true)}
                   >
+                    <Plus className="h-4 w-4 mr-2" />
                     افزودن اولین آیتم
                   </Button>
                 )}
@@ -505,6 +552,7 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
                               setEditingItemDescription(item.description || "");
                             }}
                             className="h-8 w-8 p-0"
+                            title="ویرایش"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -512,9 +560,10 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteItem(item.id)}
-                            className="h-8 w-8 p-0 text-destructive"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            title="حذف"
                           >
-                            ×
+                            <X className="h-4 w-4" />
                           </Button>
                         </div>
                       )}
@@ -526,6 +575,61 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog for adding new item */}
+      <Dialog
+        open={isAddItemDialogOpen}
+        onOpenChange={setIsAddItemDialogOpen}
+      >
+        <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>افزودن آیتم</DialogTitle>
+                    <DialogDescription>
+                      یک آیتم جدید به چک‌لیست اضافه کنید
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>نام آیتم *</Label>
+                      <Input
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        placeholder="مثلاً: مسواک"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>توضیحات</Label>
+                      <Textarea
+                        value={newItemDescription}
+                        onChange={(e) => setNewItemDescription(e.target.value)}
+                        placeholder="توضیحات اختیاری..."
+                        rows={2}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="required"
+                        checked={newItemRequired}
+                        onCheckedChange={(checked) =>
+                          setNewItemRequired(checked === true)
+                        }
+                      />
+                      <Label htmlFor="required" className="cursor-pointer">
+                        آیتم ضروری
+                      </Label>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsAddItemDialogOpen(false)}
+                      >
+                        انصراف
+                      </Button>
+                      <Button onClick={handleAddItem}>افزودن</Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
       {/* Notes Dialog */}
       <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
@@ -558,6 +662,16 @@ export function ChecklistViewClient({ checklist: initialChecklist }: ChecklistVi
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Floating Action Button - Add Item */}
+      <Button
+        onClick={() => setIsAddItemDialogOpen(true)}
+        size="lg"
+        className="fixed bottom-20 left-6 h-12 w-12 rounded-full shadow-lg z-50 hover:shadow-xl transition-shadow md:bottom-6"
+        title="افزودن آیتم جدید"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
     </div>
   );
 }

@@ -14,49 +14,50 @@ export default async function ChecklistsPage() {
     redirect("/auth/signin");
   }
 
-  const checklists = await db.travelChecklist.findMany({
-    where: {
-      userId: session.user.id,
-    },
-    include: {
-      template: {
-        select: {
-          id: true,
-          title: true,
-          icon: true,
+  try {
+    const checklists = await db.travelChecklist.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      include: {
+        template: {
+          select: {
+            id: true,
+            title: true,
+            icon: true,
+          },
+        },
+        _count: {
+          select: {
+            items: true,
+          },
         },
       },
-      _count: {
-        select: {
-          items: true,
-        },
+      orderBy: {
+        updatedAt: "desc",
       },
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-  });
+    });
 
-  // محاسبه درصد پیشرفت
-  const checklistsWithProgress = await Promise.all(
-    checklists.map(async (checklist) => {
-      const allItems = await db.checklistItem.findMany({
-        where: { checklistId: checklist.id },
-        select: { isChecked: true },
-      });
+    // محاسبه درصد پیشرفت
+    const checklistsWithProgress = await Promise.all(
+      checklists.map(async (checklist) => {
+        const allItems = await db.checklistItem.findMany({
+          where: { checklistId: checklist.id },
+          select: { isChecked: true },
+        });
 
-      const checkedCount = allItems.filter((item) => item.isChecked).length;
-      const totalCount = allItems.length;
-      const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
+        const checkedCount = allItems.filter((item) => item.isChecked).length;
+        const totalCount = allItems.length;
+        const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
 
-      return {
-        ...checklist,
-        progress: Math.round(progress),
-        checkedCount,
-        totalCount,
-      };
-    })
-  );
+        return {
+          ...checklist,
+          progress: Math.round(progress),
+          checkedCount,
+          totalCount,
+        };
+      })
+    );
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -82,5 +83,20 @@ export default async function ChecklistsPage() {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error("Error fetching checklists:", error);
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold mb-4">خطا در بارگذاری چک‌لیست‌ها</h1>
+            <p className="text-muted-foreground">
+              لطفاً صفحه را refresh کنید یا دوباره تلاش کنید.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 

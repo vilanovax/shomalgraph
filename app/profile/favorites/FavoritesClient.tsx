@@ -105,7 +105,7 @@ export function FavoritesClient({ favorites }: FavoritesClientProps) {
             هنوز بوک‌مارکی اضافه نکرده‌اید
           </p>
           <p className="text-center text-sm text-muted-foreground">
-            برای ذخیره آیتم‌ها، به صفحه جزئیات آنها بروید و روی دکمه "ذخیره" کلیک کنید
+            برای ذخیره آیتم‌ها، به صفحه جزئیات آنها بروید و روی دکمه &quot;ذخیره&quot; کلیک کنید
           </p>
         </CardContent>
       </Card>

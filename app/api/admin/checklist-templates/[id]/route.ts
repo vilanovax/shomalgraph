@@ -80,14 +80,14 @@ export async function PUT(
       where: { templateId: id },
     });
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       title,
       description: description || null,
       icon: icon || null,
       travelType: travelType ? (travelType as ChecklistTravelType) : null,
       season: season ? (season as Season) : null,
       items: {
-        create: items.map((item: any, index: number) => ({
+        create: items.map((item: { name: string; description?: string; isRequired?: boolean; order?: number }, index: number) => ({
           name: item.name,
           description: item.description || null,
           order: item.order !== undefined ? item.order : index,

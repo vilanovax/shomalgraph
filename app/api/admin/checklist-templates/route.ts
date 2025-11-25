@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     }
 
     // بررسی و پاکسازی آیتم‌ها
-    const validItems = items.filter((item: any) => item.name && item.name.trim());
+    const validItems = items.filter((item: { name?: string }) => item.name && item.name.trim());
     if (validItems.length === 0) {
       return NextResponse.json(
         { success: false, error: "حداقل یک آیتم با نام معتبر الزامی است" },
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         isActive: true,
         createdById: user.id,
         items: {
-          create: validItems.map((item: any, index: number) => ({
+          create: validItems.map((item: { name: string; description?: string; isRequired?: boolean; order?: number }, index: number) => ({
             name: item.name.trim(),
             description: item.description?.trim() || null,
             order: item.order !== undefined ? item.order : index,

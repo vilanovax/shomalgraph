@@ -39,7 +39,7 @@ export async function PUT(
 
     const { name, description, order, isRequired, notes } = body;
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
 
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;

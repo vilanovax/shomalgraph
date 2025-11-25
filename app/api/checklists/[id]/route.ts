@@ -119,15 +119,30 @@ export async function PUT(
 
     const { title, description, notes, travelType, season, isShared } = body;
 
-    const updateData: any = {};
+    console.log("Update request body:", { title, description, notes, travelType, season, isShared });
+
+    const updateData: Record<string, unknown> = {};
 
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (notes !== undefined) updateData.notes = notes;
+    if (notes !== undefined) {
+      // تبدیل رشته خالی به null
+      updateData.notes = notes === "" || notes === null ? null : notes;
+    }
     if (travelType !== undefined)
       updateData.travelType = travelType as ChecklistTravelType;
     if (season !== undefined) updateData.season = season as Season;
     if (isShared !== undefined) updateData.isShared = isShared;
+
+    console.log("Update data:", updateData);
+
+    // بررسی اینکه آیا داده‌ای برای به‌روزرسانی وجود دارد
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { success: false, error: "هیچ داده‌ای برای به‌روزرسانی ارسال نشده است" },
+        { status: 400 }
+      );
+    }
 
     const updatedChecklist = await db.travelChecklist.update({
       where: { id },
@@ -153,8 +168,10 @@ export async function PUT(
     });
   } catch (error: unknown) {
     console.error("Error updating checklist:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "خطا در به‌روزرسانی چک‌لیست";
     return NextResponse.json(
-      { success: false, error: "خطا در به‌روزرسانی چک‌لیست" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
