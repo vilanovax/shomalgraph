@@ -65,6 +65,9 @@ model User {
   commentReports CommentReport[] @relation("CommentReports")
   listLikes     ListLike[]    @relation("ListLikes")
   itemSuggestions ItemSuggestion[] @relation("ItemSuggestions")
+  travelPlans   TravelPlan[]  @relation("TravelPlans")
+  checklistTemplates TravelChecklistTemplate[] @relation("ChecklistTemplateCreator")
+  checklists    TravelChecklist[] @relation("UserChecklists")
 
   @@index([phone])
   @@map("users")
@@ -114,6 +117,7 @@ model Restaurant {
   reviews         Review[]
   favorites       Favorite[]
   listItems       ListItem[]
+  travelPlanItems TravelPlanItem[]
 
   @@index([latitude, longitude])
   @@index([slug])
@@ -148,6 +152,7 @@ model TouristPlace {
   reviews         Review[]
   favorites       Favorite[]
   listItems       ListItem[]
+  travelPlanItems TravelPlanItem[]
 
   @@index([latitude, longitude])
   @@index([slug])
@@ -391,4 +396,254 @@ model Setting {
   @@index([category])
   @@index([key])
   @@map("settings")
+}
+
+// ==================== Travel Planning ====================
+
+enum PlanType {
+  QUICK      // برنامه فوری
+  DAILY      // برنامه روزانه
+  TRIP       // برنامه کلی چندروزه
+}
+
+enum TravelType {
+  SOLO
+  COUPLE
+  FAMILY_WITH_KIDS
+  FAMILY_ADULTS
+  FRIENDS
+}
+
+enum AvailableTime {
+  ONE_TO_TWO_HOURS    // 1-2 ساعت
+  HALF_DAY            // نیم روز
+  FULL_DAY            // کل روز
+}
+
+enum Budget {
+  ECONOMIC
+  MODERATE
+  LUXURY
+  ANY
+}
+
+enum TravelStyle {
+  ADVENTUROUS
+  RELAXED
+  CULTURAL
+  MIXED
+}
+
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+}
+
+enum TimeSlot {
+  MORNING
+  NOON
+  AFTERNOON
+  EVENING
+  NIGHT
+}
+
+enum PlanItemType {
+  RESTAURANT
+  PLACE
+  ACTIVITY
+  TRAVEL
+}
+
+model TravelPlan {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation("TravelPlans", fields: [userId], references: [id], onDelete: Cascade)
+  
+  title           String?
+  description     String?
+  
+  planType        PlanType      // QUICK, DAILY, TRIP
+  travelType      TravelType?
+  availableTime   AvailableTime? // برای Quick Plan
+  travelStyle     TravelStyle?  // برای Trip Plan
+  
+  // موقعیت و محدوده
+  latitude        Float
+  longitude       Float
+  address         String
+  searchRadius    Int           @default(5) // محدوده جستجو به کیلومتر (0-50)
+  
+  // زمان‌بندی
+  startDate       DateTime?
+  endDate         DateTime?
+  startTime       String?       // برای Daily Plan (مثلاً "10:00")
+  endTime         String?       // برای Daily Plan (مثلاً "22:00")
+  
+  // ترجیحات
+  budget          Budget?       @default(ANY)
+  preferences     Json?        // اولویت‌ها (طبیعت، غذا، خرید و...)
+  interests       Json?        // علایق انتخاب شده
+  
+  // خلاصه برنامه
+  estimatedCost   Float?
+  totalDistance   Float?       // مسافت کل به کیلومتر
+  totalDuration   Int?         // مدت کل به دقیقه
+  
+  status          PlanStatus   @default(DRAFT)
+  isShared        Boolean      @default(false)
+  
+  items           TravelPlanItem[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([planType])
+  @@index([status])
+  @@map("travel_plans")
+}
+
+model TravelPlanItem {
+  id              String        @id @default(cuid())
+  planId          String
+  plan            TravelPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  
+  order           Int           // ترتیب در برنامه
+  dayNumber       Int?          // برای Trip Plan: روز 1، 2، 3...
+  
+  timeSlot        TimeSlot?     // صبح، ظهر، عصر، شب
+  scheduledTime   DateTime?     // زمان دقیق
+  duration        Int?          // مدت زمان در دقیقه
+  
+  itemType        PlanItemType
+  restaurantId    String?
+  restaurant      Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  placeId         String?
+  place           TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  travelDuration  Int?          // مدت زمان سفر به مقصد بعدی (برای TRAVEL)
+  distance        Float?        // فاصله تا مقصد بعدی
+  
+  notes           String?       // یادداشت کاربر
+  tips            String?       // نکات و توصیه‌ها
+  
+  isCompleted     Boolean       @default(false)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([planId])
+  @@index([order])
+  @@map("travel_plan_items")
+}
+
+// ==================== Travel Checklists ====================
+
+enum ChecklistTravelType {
+  FAMILY_WITH_KIDS
+  NATURE
+  BEACH
+  URBAN
+  COUPLE
+  FRIENDS
+  SOLO
+  OTHER
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ALL
+}
+
+model TravelChecklistTemplate {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  icon        String?
+  travelType  ChecklistTravelType?
+  season      Season?  @default(ALL)
+  isActive    Boolean  @default(true)
+  
+  createdById String
+  createdBy   User     @relation("ChecklistTemplateCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  
+  items       ChecklistTemplateItem[]
+  checklists  TravelChecklist[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([travelType])
+  @@index([isActive])
+  @@index([createdById])
+  @@map("checklist_templates")
+}
+
+model TravelChecklist {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserChecklists", fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  templateId  String?
+  template    TravelChecklistTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  
+  travelType  ChecklistTravelType?
+  season      Season?
+  isShared    Boolean  @default(false)
+  
+  items       ChecklistItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([travelType])
+  @@index([templateId])
+  @@map("travel_checklists")
+}
+
+model ChecklistTemplateItem {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  order           Int      @default(0)
+  isRequired      Boolean  @default(false)
+  
+  templateId      String
+  template        TravelChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([templateId])
+  @@index([order])
+  @@map("checklist_template_items")
+}
+
+model ChecklistItem {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  order           Int      @default(0)
+  isRequired      Boolean  @default(false)
+  isChecked       Boolean  @default(false)
+  notes           String?
+  
+  checklistId     String
+  checklist       TravelChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  
+  templateItemId  String? // برای ردیابی آیتم اصلی در قالب (اختیاری)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([checklistId])
+  @@index([order])
+  @@map("checklist_items")
 }

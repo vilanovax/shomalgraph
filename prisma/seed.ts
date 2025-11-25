@@ -5,10 +5,18 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 شروع seed کردن دیتابیس...");
 
-  // حذف دیتاهای قبلی
+  // حذف دیتاهای قبلی (به ترتیب وابستگی)
+  await prisma.checklistItem.deleteMany();
+  await prisma.checklistTemplateItem.deleteMany();
+  await prisma.travelChecklist.deleteMany();
+  await prisma.travelChecklistTemplate.deleteMany();
+  await prisma.travelPlanItem.deleteMany();
+  await prisma.travelPlan.deleteMany();
   await prisma.review.deleteMany();
   await prisma.favorite.deleteMany();
   await prisma.suggestion.deleteMany();
+  await prisma.listItem.deleteMany();
+  await prisma.list.deleteMany();
   await prisma.restaurant.deleteMany();
   await prisma.touristPlace.deleteMany();
   await prisma.category.deleteMany();
@@ -72,191 +80,435 @@ async function main() {
 
   console.log("✅ دسته‌بندی‌ها ایجاد شدند");
 
-  // ایجاد رستوران‌ها
-  const restaurant1 = await prisma.restaurant.create({
-    data: {
-      name: "رستوران سنتی شمال",
-      slug: "shomal-restaurant",
-      description:
-        "رستوران سنتی با غذاهای محلی شمال ایران. محیط دلنشین با منظره جنگل.",
-      address: "رامسر، خیابان امام خمینی، کوچه گلستان، پلاک 12",
-      latitude: 36.9077,
-      longitude: 50.6586,
-      phone: "01155221234",
-      priceRange: "MODERATE",
-      rating: 4.5,
-      reviewCount: 0,
-      categoryId: restaurantCategory.id,
-      ownerId: businessOwner.id,
-      isVerified: true,
-      isActive: true,
-    },
-  });
+  // ایجاد 10 رستوران نمونه
+  const restaurants = await Promise.all([
+    prisma.restaurant.create({
+      data: {
+        name: "رستوران کوهستان",
+        slug: "restaurant-kohestan",
+        description: "رستوران سنتی با منوی غذاهای محلی شمالی و فضای دنج و آرامش‌بخش",
+        address: "مازندران، رامسر، جاده ساحلی، کیلومتر 5",
+        latitude: 36.9025,
+        longitude: 50.6481,
+        phone: "011-55223344",
+        priceRange: "MODERATE",
+        rating: 4.5,
+        reviewCount: 23,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "کافه ساحل",
+        slug: "cafe-sahel",
+        description: "کافه مدرن با نمای رو به دریا و نوشیدنی‌های خوشمزه و دسرهای خاص",
+        address: "گیلان، رشت، بلوار ساحلی انزلی، پلاک 120",
+        latitude: 37.4717,
+        longitude: 49.4648,
+        phone: "013-33221100",
+        priceRange: "BUDGET",
+        rating: 4.2,
+        reviewCount: 15,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "رستوران دریایی ماهی‌گیر",
+        slug: "restaurant-mahigir",
+        description: "رستوران تخصصی غذاهای دریایی با ماهی تازه روز و طعم‌های بی‌نظیر",
+        address: "مازندران، نوشهر، خیابان ساحلی، نزدیک اسکله",
+        latitude: 36.6481,
+        longitude: 51.5000,
+        phone: "011-44225566",
+        priceRange: "EXPENSIVE",
+        rating: 4.8,
+        reviewCount: 42,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "کافه جنگل",
+        slug: "cafe-jangal",
+        description: "کافه در دل طبیعت با فضای باز و منوی صبحانه و ناهار کامل",
+        address: "گیلان، لاهیجان، جاده جنگل، کیلومتر 8",
+        latitude: 37.2049,
+        longitude: 50.0094,
+        phone: "014-22334455",
+        priceRange: "MODERATE",
+        rating: 4.3,
+        reviewCount: 18,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "رستوران لوکس ویلا",
+        slug: "restaurant-vila-luxury",
+        description: "رستوران لاکچری با منوی بین‌المللی و فضای مجلل و سرویس عالی",
+        address: "مازندران، بابلسر، بلوار ساحلی، هتل ویلا",
+        latitude: 36.7022,
+        longitude: 52.6578,
+        phone: "011-66778899",
+        priceRange: "LUXURY",
+        rating: 4.9,
+        reviewCount: 67,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "رستوران محلی شمالی",
+        slug: "restaurant-mahali-shomali",
+        description: "رستوران با غذاهای محلی اصیل شمالی و محیطی سنتی و صمیمی",
+        address: "مازندران، آمل، خیابان اصلی، پلاک 45",
+        latitude: 36.4694,
+        longitude: 52.3508,
+        phone: "011-33445566",
+        priceRange: "BUDGET",
+        rating: 4.4,
+        reviewCount: 31,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "کافه کتابخانه",
+        slug: "cafe-ketabkhane",
+        description: "کافه کتاب با فضای آرام و مناسب برای مطالعه و کار",
+        address: "گیلان، رشت، خیابان فرهنگ، کافه کتابخانه",
+        latitude: 37.2808,
+        longitude: 49.5832,
+        phone: "013-22334455",
+        priceRange: "MODERATE",
+        rating: 4.6,
+        reviewCount: 28,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "رستوران کبابی آتش",
+        slug: "restaurant-kababi-atesh",
+        description: "رستوران تخصصی کباب با گوشت تازه و کباب‌های خوشمزه",
+        address: "مازندران، ساری، بلوار طالقانی، رستوران کبابی آتش",
+        latitude: 36.5633,
+        longitude: 53.0581,
+        phone: "011-77889900",
+        priceRange: "MODERATE",
+        rating: 4.7,
+        reviewCount: 55,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "کافه رستوران بامبو",
+        slug: "cafe-restaurant-bamboo",
+        description: "کافه رستوران مدرن با منوی متنوع و فضای دنج",
+        address: "گیلان، انزلی، بلوار ساحلی، کافه بامبو",
+        latitude: 37.4731,
+        longitude: 49.4578,
+        phone: "013-44556677",
+        priceRange: "MODERATE",
+        rating: 4.5,
+        reviewCount: 39,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.restaurant.create({
+      data: {
+        name: "رستوران ایتالیایی پیتزا",
+        slug: "restaurant-italian-pizza",
+        description: "رستوران ایتالیایی با پیتزاهای خوشمزه و پاستاهای تازه",
+        address: "مازندران، چالوس، خیابان ساحلی، رستوران ایتالیایی",
+        latitude: 36.6550,
+        longitude: 51.4200,
+        phone: "011-88990011",
+        priceRange: "EXPENSIVE",
+        rating: 4.8,
+        reviewCount: 72,
+        categoryId: restaurantCategory.id,
+        ownerId: businessOwner.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+  ]);
 
-  const restaurant2 = await prisma.restaurant.create({
-    data: {
-      name: "کافه دریا",
-      slug: "darya-cafe",
-      description: "کافه مدرن با منظره دریا. قهوه‌های تخصصی و دسرهای خوشمزه.",
-      address: "چالوس، بلوار ساحلی، نبش کوچه نسیم",
-      latitude: 36.6552,
-      longitude: 51.4205,
-      phone: "01144556677",
-      priceRange: "EXPENSIVE",
-      rating: 4.8,
-      reviewCount: 0,
-      categoryId: restaurantCategory.id,
-      isVerified: true,
-      isActive: true,
-    },
-  });
+  console.log("✅ 10 رستوران ایجاد شدند");
 
-  const restaurant3 = await prisma.restaurant.create({
-    data: {
-      name: "رستوران کوهستان",
-      slug: "koohestan-restaurant",
-      description:
-        "رستوران روی تپه با منظره کوه و جنگل. غذاهای ایرانی و محلی.",
-      address: "رشت، جاده لشت نشا، کیلومتر 15",
-      latitude: 37.2808,
-      longitude: 49.5832,
-      phone: "01333445566",
-      priceRange: "BUDGET",
-      rating: 4.2,
-      reviewCount: 0,
-      categoryId: restaurantCategory.id,
-      isVerified: true,
-      isActive: true,
-    },
-  });
+  // ایجاد 10 مکان گردشگری نمونه
+  const places = await Promise.all([
+    prisma.touristPlace.create({
+      data: {
+        name: "جنگل ابر",
+        slug: "jangal-abar",
+        description: "جنگل زیبای ابر با درختان سرسبز و هوای خنک و مطبوع",
+        address: "مازندران، شاهرود، جاده جنگل ابر",
+        latitude: 36.6333,
+        longitude: 54.8500,
+        placeType: "FOREST",
+        suitableFor: ["FAMILY", "FRIENDS", "COUPLE"],
+        rating: 4.8,
+        reviewCount: 156,
+        isFree: true,
+        entryFee: null,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "آبشار لاتون",
+        slug: "abshar-latun",
+        description: "آبشار بلند و زیبای لاتون با طبیعت بکر و چشم‌انداز خیره‌کننده",
+        address: "گیلان، آستارا، جاده لاتون، آبشار لاتون",
+        latitude: 38.4333,
+        longitude: 48.8667,
+        placeType: "WATERFALL",
+        suitableFor: ["FAMILY", "FRIENDS", "COUPLE"],
+        rating: 4.7,
+        reviewCount: 89,
+        isFree: true,
+        entryFee: null,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "ساحل چمخاله",
+        slug: "sahel-chamkhale",
+        description: "ساحل زیبا و آرام چمخاله با شن‌های طلایی و آب شفاف",
+        address: "گیلان، لنگرود، ساحل چمخاله",
+        latitude: 37.1833,
+        longitude: 50.1500,
+        placeType: "BEACH",
+        suitableFor: ["FAMILY", "FRIENDS", "COUPLE", "KIDS"],
+        rating: 4.6,
+        reviewCount: 124,
+        isFree: true,
+        entryFee: null,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "کوه دماوند",
+        slug: "kuh-damavand",
+        description: "بلندترین قله ایران با مناظر طبیعی بی‌نظیر و هوای پاک",
+        address: "مازندران، آمل، جاده دماوند",
+        latitude: 35.9517,
+        longitude: 52.1083,
+        placeType: "MOUNTAIN",
+        suitableFor: ["FRIENDS", "SOLO"],
+        rating: 4.9,
+        reviewCount: 203,
+        isFree: true,
+        entryFee: null,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "پارک جنگلی نور",
+        slug: "park-jangali-noor",
+        description: "پارک جنگلی زیبا با امکانات تفریحی و فضای مناسب برای پیک‌نیک",
+        address: "مازندران، نور، پارک جنگلی نور",
+        latitude: 36.5833,
+        longitude: 52.0167,
+        placeType: "PARK",
+        suitableFor: ["FAMILY", "FRIENDS", "KIDS"],
+        rating: 4.4,
+        reviewCount: 67,
+        isFree: false,
+        entryFee: 50000,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "تالاب انزلی",
+        slug: "talab-anzali",
+        description: "تالاب زیبا و بزرگ انزلی با قایق‌سواری و طبیعت منحصر به فرد",
+        address: "گیلان، انزلی، تالاب انزلی",
+        latitude: 37.4667,
+        longitude: 49.4667,
+        placeType: "NATURE",
+        suitableFor: ["FAMILY", "FRIENDS", "COUPLE"],
+        rating: 4.5,
+        reviewCount: 178,
+        isFree: false,
+        entryFee: 100000,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "قلعه رودخان",
+        slug: "ghale-rudkhan",
+        description: "قلعه تاریخی و باستانی رودخان با معماری منحصر به فرد",
+        address: "گیلان، فومن، جاده قلعه رودخان",
+        latitude: 37.0667,
+        longitude: 49.3167,
+        placeType: "HISTORICAL",
+        suitableFor: ["FAMILY", "FRIENDS", "COUPLE"],
+        rating: 4.6,
+        reviewCount: 145,
+        isFree: false,
+        entryFee: 80000,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "ساحل رامسر",
+        slug: "sahel-ramsar",
+        description: "ساحل زیبای رامسر با امکانات تفریحی و رستوران‌های ساحلی",
+        address: "مازندران، رامسر، ساحل رامسر",
+        latitude: 36.9167,
+        longitude: 50.6500,
+        placeType: "BEACH",
+        suitableFor: ["FAMILY", "FRIENDS", "COUPLE", "KIDS"],
+        rating: 4.7,
+        reviewCount: 234,
+        isFree: true,
+        entryFee: null,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "پارک آبی رامسر",
+        slug: "park-abi-ramsar",
+        description: "پارک آبی با استخر و سرسره‌های آبی و امکانات تفریحی",
+        address: "مازندران، رامسر، پارک آبی",
+        latitude: 36.9000,
+        longitude: 50.6500,
+        placeType: "ENTERTAINMENT",
+        suitableFor: ["FAMILY", "FRIENDS", "KIDS"],
+        rating: 4.3,
+        reviewCount: 98,
+        isFree: false,
+        entryFee: 200000,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "موزه رشت",
+        slug: "muze-rasht",
+        description: "موزه تاریخی رشت با آثار باستانی و فرهنگی منطقه",
+        address: "گیلان، رشت، خیابان امام، موزه رشت",
+        latitude: 37.2808,
+        longitude: 49.5832,
+        placeType: "CULTURAL",
+        suitableFor: ["FAMILY", "FRIENDS", "COUPLE"],
+        rating: 4.2,
+        reviewCount: 56,
+        isFree: false,
+        entryFee: 50000,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+    prisma.touristPlace.create({
+      data: {
+        name: "آبشار لاتون",
+        slug: "abshar-latun-2",
+        description: "آبشار زیبا در دل جنگل‌های شمال. مسیر پیاده‌روی و منظره بی‌نظیر.",
+        address: "رامسر، جاده کیاسر، روستای لاتون",
+        latitude: 36.5659,
+        longitude: 50.5282,
+        placeType: "WATERFALL",
+        suitableFor: ["FAMILY", "FRIENDS", "COUPLE"],
+        rating: 4.7,
+        reviewCount: 45,
+        isFree: true,
+        entryFee: null,
+        categoryId: tourismCategory.id,
+        isVerified: true,
+        isActive: true,
+      },
+    }),
+  ]);
 
-  console.log("✅ رستوران‌ها ایجاد شدند");
-
-  // ایجاد مکان‌های گردشگری
-  const place1 = await prisma.touristPlace.create({
-    data: {
-      name: "آبشار لاتون",
-      slug: "latoon-waterfall",
-      description:
-        "آبشار زیبا در دل جنگل‌های شمال. مسیر پیاده‌روی و منظره بی‌نظیر.",
-      address: "رامسر، جاده کیاسر، روستای لاتون",
-      latitude: 36.5659,
-      longitude: 50.5282,
-      placeType: "WATERFALL",
-      suitableFor: ["FAMILY", "FRIENDS", "COUPLE"],
-      rating: 4.7,
-      reviewCount: 0,
-      isFree: true,
-      categoryId: tourismCategory.id,
-      isVerified: true,
-      isActive: true,
-    },
-  });
-
-  const place2 = await prisma.touristPlace.create({
-    data: {
-      name: "تله‌کابین رامسر",
-      slug: "ramsar-telecabin",
-      description: "تله‌کابین با منظره دریا و جنگل. تجربه‌ای فراموش‌نشدنی.",
-      address: "رامسر، بلوار شهید رجایی، ابتدای تله‌کابین",
-      latitude: 36.9147,
-      longitude: 50.6591,
-      placeType: "ENTERTAINMENT",
-      suitableFor: ["FAMILY", "COUPLE", "KIDS"],
-      rating: 4.6,
-      reviewCount: 0,
-      isFree: false,
-      entryFee: 500000,
-      categoryId: tourismCategory.id,
-      isVerified: true,
-      isActive: true,
-    },
-  });
-
-  const place3 = await prisma.touristPlace.create({
-    data: {
-      name: "جنگل ابر",
-      slug: "jungle-e-abr",
-      description: "جنگل زیبای ابر در ارتفاعات. هوای خنک و طبیعت بکر.",
-      address: "شاهرود، جاده شاهرود به کلاردشت",
-      latitude: 36.4183,
-      longitude: 54.9764,
-      placeType: "FOREST",
-      suitableFor: ["FAMILY", "FRIENDS"],
-      rating: 4.9,
-      reviewCount: 0,
-      isFree: true,
-      categoryId: tourismCategory.id,
-      isVerified: true,
-      isActive: true,
-    },
-  });
-
-  const place4 = await prisma.touristPlace.create({
-    data: {
-      name: "ساحل چمخاله",
-      slug: "chamkhaleh-beach",
-      description: "ساحل زیبا با شن‌های طلایی. مناسب برای شنا و تفریح.",
-      address: "لنگرود، ساحل چمخاله",
-      latitude: 37.1954,
-      longitude: 50.1468,
-      placeType: "BEACH",
-      suitableFor: ["FAMILY", "KIDS", "FRIENDS"],
-      rating: 4.4,
-      reviewCount: 0,
-      isFree: true,
-      categoryId: tourismCategory.id,
-      isVerified: true,
-      isActive: true,
-    },
-  });
-
-  console.log("✅ مکان‌های گردشگری ایجاد شدند");
+  console.log("✅ 10 مکان گردشگری ایجاد شدند");
 
   // ایجاد نظرات نمونه
   await prisma.review.createMany({
     data: [
       {
         userId: user1.id,
-        restaurantId: restaurant1.id,
+        restaurantId: restaurants[0].id,
         rating: 5,
         comment: "غذاهای بسیار خوشمزه و محیط دلنشین. حتماً دوباره می‌آیم!",
       },
       {
         userId: user2.id,
-        restaurantId: restaurant1.id,
+        restaurantId: restaurants[0].id,
         rating: 4,
         comment: "رستوران خوبی با کیفیت مناسب. قیمت‌ها هم معقول بود.",
       },
       {
         userId: user1.id,
-        placeId: place1.id,
+        placeId: places[0].id,
         rating: 5,
-        comment: "آبشار فوق‌العاده زیبایی! حتماً ببینید.",
+        comment: "جنگل ابر فوق‌العاده زیباست! حتماً ببینید.",
       },
       {
         userId: user2.id,
-        placeId: place2.id,
+        placeId: places[1].id,
         rating: 5,
-        comment: "تله‌کابین عالی با منظره خیره‌کننده!",
+        comment: "آبشار لاتون عالی با منظره خیره‌کننده!",
       },
     ],
-  });
-
-  // آپدیت امتیازات
-  await prisma.restaurant.update({
-    where: { id: restaurant1.id },
-    data: { rating: 4.5, reviewCount: 2 },
-  });
-
-  await prisma.touristPlace.update({
-    where: { id: place1.id },
-    data: { rating: 5.0, reviewCount: 1 },
-  });
-
-  await prisma.touristPlace.update({
-    where: { id: place2.id },
-    data: { rating: 5.0, reviewCount: 1 },
   });
 
   console.log("✅ نظرات ایجاد شدند");
@@ -279,14 +531,228 @@ async function main() {
 
   console.log("✅ پیشنهادات ایجاد شدند");
 
+  // ایجاد قالب‌های چک‌لیست نمونه
+  const template1 = await prisma.travelChecklistTemplate.create({
+    data: {
+      title: "لیست سفر خانوادگی دریا",
+      description: "چک‌لیست کامل برای سفر خانوادگی به ساحل",
+      icon: "🏖️",
+      travelType: "FAMILY_WITH_KIDS",
+      season: "SUMMER",
+      isActive: true,
+      createdById: admin.id,
+      items: {
+        create: [
+          {
+            name: "کرم ضد آفتاب",
+            description: "ضد آفتاب با SPF بالا برای بزرگسالان و کودکان",
+            order: 0,
+            isRequired: true,
+          },
+          {
+            name: "کلاه و عینک آفتابی",
+            description: "برای محافظت از نور خورشید",
+            order: 1,
+            isRequired: true,
+          },
+          {
+            name: "لباس شنا",
+            description: "برای بزرگسالان و کودکان",
+            order: 2,
+            isRequired: true,
+          },
+          {
+            name: "حوله ساحلی",
+            description: "حوله بزرگ برای استفاده در ساحل",
+            order: 3,
+            isRequired: true,
+          },
+          {
+            name: "کفش آبی",
+            description: "برای راه رفتن روی شن و سنگ",
+            order: 4,
+            isRequired: false,
+          },
+          {
+            name: "بازی‌های ساحلی",
+            description: "توپ، سطل و بیلچه برای کودکان",
+            order: 5,
+            isRequired: false,
+          },
+          {
+            name: "آب و نوشیدنی",
+            description: "آب معدنی و نوشیدنی‌های خنک",
+            order: 6,
+            isRequired: true,
+          },
+          {
+            name: "میوه و تنقلات",
+            description: "میوه و خوراکی‌های سبک",
+            order: 7,
+            isRequired: false,
+          },
+          {
+            name: "کیسه زباله",
+            description: "برای جمع‌آوری زباله‌ها",
+            order: 8,
+            isRequired: true,
+          },
+          {
+            name: "دوربین عکاسی",
+            description: "برای ثبت خاطرات",
+            order: 9,
+            isRequired: false,
+          },
+        ],
+      },
+    },
+  });
+
+  const template2 = await prisma.travelChecklistTemplate.create({
+    data: {
+      title: "لیست سفر طبیعت‌گردی",
+      description: "چک‌لیست برای سفر به طبیعت و کوهستان",
+      icon: "🏔️",
+      travelType: "NATURE",
+      season: "ALL",
+      isActive: true,
+      createdById: admin.id,
+      items: {
+        create: [
+          {
+            name: "کفش کوهنوردی",
+            description: "کفش مناسب برای پیاده‌روی در طبیعت",
+            order: 0,
+            isRequired: true,
+          },
+          {
+            name: "کوله پشتی",
+            description: "کوله مناسب برای حمل وسایل",
+            order: 1,
+            isRequired: true,
+          },
+          {
+            name: "آب و نوشیدنی",
+            description: "آب کافی برای سفر",
+            order: 2,
+            isRequired: true,
+          },
+          {
+            name: "غذا و تنقلات",
+            description: "غذاهای سبک و انرژی‌زا",
+            order: 3,
+            isRequired: true,
+          },
+          {
+            name: "کمک‌های اولیه",
+            description: "جعبه کمک‌های اولیه",
+            order: 4,
+            isRequired: true,
+          },
+          {
+            name: "چراغ قوه",
+            description: "چراغ قوه یا هد لامپ",
+            order: 5,
+            isRequired: true,
+          },
+          {
+            name: "لباس اضافی",
+            description: "لباس مناسب برای تغییر آب و هوا",
+            order: 6,
+            isRequired: true,
+          },
+          {
+            name: "نقشه و قطب‌نما",
+            description: "برای مسیریابی",
+            order: 7,
+            isRequired: false,
+          },
+          {
+            name: "کرم دافع حشرات",
+            description: "برای محافظت از نیش حشرات",
+            order: 8,
+            isRequired: false,
+          },
+          {
+            name: "کیسه خواب",
+            description: "در صورت اقامت شبانه",
+            order: 9,
+            isRequired: false,
+          },
+        ],
+      },
+    },
+  });
+
+  const template3 = await prisma.travelChecklistTemplate.create({
+    data: {
+      title: "لیست سفر شهری",
+      description: "چک‌لیست برای سفر به شهر و بازدید از جاذبه‌های شهری",
+      icon: "🏙️",
+      travelType: "URBAN",
+      season: "ALL",
+      isActive: true,
+      createdById: admin.id,
+      items: {
+        create: [
+          {
+            name: "لباس مناسب",
+            description: "لباس مناسب برای بازدید از شهر",
+            order: 0,
+            isRequired: true,
+          },
+          {
+            name: "کفش راحت",
+            description: "کفش مناسب برای پیاده‌روی در شهر",
+            order: 1,
+            isRequired: true,
+          },
+          {
+            name: "کیف پول و پول نقد",
+            description: "پول نقد و کارت بانکی",
+            order: 2,
+            isRequired: true,
+          },
+          {
+            name: "دوربین یا موبایل",
+            description: "برای عکاسی",
+            order: 3,
+            isRequired: false,
+          },
+          {
+            name: "نقشه شهر",
+            description: "نقشه یا اپلیکیشن مسیریابی",
+            order: 4,
+            isRequired: false,
+          },
+          {
+            name: "بلیط‌های بازدید",
+            description: "بلیط موزه‌ها و جاذبه‌ها",
+            order: 5,
+            isRequired: false,
+          },
+          {
+            name: "آب و تنقلات",
+            description: "آب و خوراکی‌های سبک",
+            order: 6,
+            isRequired: false,
+          },
+        ],
+      },
+    },
+  });
+
+  console.log("✅ قالب‌های چک‌لیست ایجاد شدند");
+
   console.log("\n🎉 Seed با موفقیت انجام شد!");
   console.log("📊 خلاصه:");
   console.log(`   👥 کاربران: 4 (1 ادمین، 1 صاحب کسب‌وکار، 2 کاربر عادی)`);
   console.log(`   🗂️  دسته‌بندی: 2`);
-  console.log(`   🍽️  رستوران‌ها: 3`);
-  console.log(`   🏞️  مکان‌های گردشگری: 4`);
+  console.log(`   🍽️  رستوران‌ها: ${restaurants.length}`);
+  console.log(`   🏞️  مکان‌های گردشگری: ${places.length}`);
   console.log(`   ⭐ نظرات: 4`);
   console.log(`   💡 پیشنهادات: 1`);
+  console.log(`   📋 قالب‌های چک‌لیست: 3`);
   console.log("\n📝 اطلاعات ورود:");
   console.log(`   ادمین: 09121941532 (OTP: 123456)`);
   console.log(`   صاحب کسب‌وکار: 09129876543 (OTP: 123456)`);

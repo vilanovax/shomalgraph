@@ -38,6 +38,11 @@ async function getHomeData() {
     return { topRestaurants, topPlaces };
   } catch (error) {
     console.error("Error fetching home data:", error);
+    // اگر خطای اتصال به دیتابیس باشد، آرایه خالی برمی‌گردانیم
+    // تا صفحه crash نکند
+    if (error instanceof Error && error.message.includes("Can't reach database")) {
+      console.warn("Database connection failed. Returning empty data.");
+    }
     return { topRestaurants: [], topPlaces: [] };
   }
 }

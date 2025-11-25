@@ -4,7 +4,8 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
-import { List, Heart, Sparkles, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { List, Heart, Sparkles, MapPin, Calendar } from "lucide-react";
 import { MobileHeader } from "@/components/layout/MobileHeader";
 
 async function getPublicLists() {
@@ -38,6 +39,32 @@ export default async function ExplorePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <MobileHeader title="اکسپلور" />
+
+      {/* Travel Planning Section */}
+      <section className="px-4 py-6">
+        <div className="max-w-7xl mx-auto mb-6">
+          <Link href="/explore/plan">
+            <Card className="border-2 border-primary/20 hover:border-primary transition-colors cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl">
+                    <Calendar className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold mb-1">برنامه‌ریزی سفر هوشمند</h3>
+                    <p className="text-sm text-muted-foreground">
+                      با کمک هوش مصنوعی بهترین برنامه سفر را برای خودت بساز
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    شروع کنید
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </section>
 
       {/* Banners */}
       <section className="px-4 py-6">

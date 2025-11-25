@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { User, Phone, Crown, LogOut, Settings, Heart, MessageSquare, Edit } from "lucide-react";
+import { User, Phone, Crown, LogOut, Settings, Heart, MessageSquare, Edit, ClipboardList } from "lucide-react";
 import Link from "next/link";
+import { ChecklistSelector } from "@/components/checklist/ChecklistSelector";
 
 async function getUserStats(userId: string) {
   try {
@@ -179,6 +180,8 @@ export default async function ProfilePage() {
               </CardContent>
             </Card>
           </Link>
+
+          <ChecklistSelector />
 
           <form action={async () => {
             "use server";

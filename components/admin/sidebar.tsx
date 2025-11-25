@@ -52,6 +52,11 @@ const menuItems = [
     icon: BookOpen,
   },
   {
+    title: "قالب‌های چک‌لیست",
+    href: "/admin/checklist-templates",
+    icon: List,
+  },
+  {
     title: "نظرات",
     href: "/admin/reviews",
     icon: FileText,
