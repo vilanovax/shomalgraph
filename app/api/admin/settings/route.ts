@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { SettingCategory } from "@prisma/client";
 
 // GET: دریافت تنظیمات
 export async function GET() {
@@ -56,18 +57,30 @@ export async function POST(request: NextRequest) {
     // ذخیره یا به‌روزرسانی هر تنظیم
     const results = await Promise.all(
       settings.map(async (setting: { key: string; value: string; category: string; description?: string; isSecret?: boolean }) => {
+        // تبدیل string به enum
+        let categoryEnum: SettingCategory = SettingCategory.GENERAL;
+        try {
+          categoryEnum = setting.category as SettingCategory;
+          // بررسی معتبر بودن enum
+          if (!Object.values(SettingCategory).includes(categoryEnum)) {
+            categoryEnum = SettingCategory.GENERAL;
+          }
+        } catch {
+          categoryEnum = SettingCategory.GENERAL;
+        }
+
         return db.setting.upsert({
           where: { key: setting.key },
           update: {
             value: setting.value || null,
-            category: setting.category || "general",
+            category: categoryEnum,
             description: setting.description || null,
             isSecret: setting.isSecret || false,
           },
           create: {
             key: setting.key,
             value: setting.value || null,
-            category: setting.category || "general",
+            category: categoryEnum,
             description: setting.description || null,
             isSecret: setting.isSecret || false,
           },

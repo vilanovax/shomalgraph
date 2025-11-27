@@ -27,10 +27,10 @@ enum PlaceType {
 }
 
 enum RestaurantPriceRange {
-  BUDGET      // ارزان
-  MODERATE    // متوسط
-  EXPENSIVE   // گران
-  LUXURY      // لاکچری
+  BUDGET // ارزان
+  MODERATE // متوسط
+  EXPENSIVE // گران
+  LUXURY // لاکچری
 }
 
 enum SuitableFor {
@@ -42,44 +42,44 @@ enum SuitableFor {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  phone         String    @unique
-  name          String?
-  avatar        String?
-  role          UserRole  @default(USER)
-  
+  id     String   @id @default(cuid())
+  phone  String   @unique
+  name   String?
+  avatar String?
+  role   UserRole @default(USER)
+
   // امتیاز و جریمه
-  score         Int       @default(0) // امتیاز کاربر (مثبت یا منفی)
-  commentBanUntil DateTime? // تاریخ پایان ممنوعیت کامنت
-  isCommentBanned Boolean @default(false) // آیا در حال حاضر ممنوع است
+  score            Int       @default(0) // امتیاز کاربر (مثبت یا منفی)
+  commentBanUntil  DateTime? // تاریخ پایان ممنوعیت کامنت
+  isCommentBanned  Boolean   @default(false) // آیا در حال حاضر ممنوع است
   placeAddBanUntil DateTime? // تاریخ پایان ممنوعیت اضافه کردن مکان
-  isPlaceAddBanned Boolean @default(false) // آیا از اضافه کردن مکان محروم است
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isPlaceAddBanned Boolean   @default(false) // آیا از اضافه کردن مکان محروم است
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  reviews       Review[]
-  favorites     Favorite[]
-  suggestions   Suggestion[]
-  restaurants   Restaurant[]  @relation("RestaurantOwner")
+  reviews     Review[]
+  favorites   Favorite[]
+  suggestions Suggestion[]
+  restaurants Restaurant[] @relation("RestaurantOwner")
 
   // Explore Lists Relations
-  lists         List[]        @relation("ListCreator")
-  itemLikes     ItemLike[]    @relation("ItemLikes")
-  itemDislikes  ItemDislike[] @relation("ItemDislikes")
-  itemComments  ItemComment[] @relation("ItemComments")
-  commentLikes  CommentLike[] @relation("CommentLikes")
-  commentReports CommentReport[] @relation("CommentReports")
-  listLikes     ListLike[]    @relation("ListLikes")
-  itemSuggestions ItemSuggestion[] @relation("ItemSuggestions")
-  travelPlans   TravelPlan[]  @relation("TravelPlans")
+  lists              List[]                    @relation("ListCreator")
+  itemLikes          ItemLike[]                @relation("ItemLikes")
+  itemDislikes       ItemDislike[]             @relation("ItemDislikes")
+  itemComments       ItemComment[]             @relation("ItemComments")
+  commentLikes       CommentLike[]             @relation("CommentLikes")
+  commentReports     CommentReport[]           @relation("CommentReports")
+  listLikes          ListLike[]                @relation("ListLikes")
+  itemSuggestions    ItemSuggestion[]          @relation("ItemSuggestions")
+  travelPlans        TravelPlan[]              @relation("TravelPlans")
   checklistTemplates TravelChecklistTemplate[] @relation("ChecklistTemplateCreator")
-  checklists    TravelChecklist[] @relation("UserChecklists")
-  
+  checklists         TravelChecklist[]         @relation("UserChecklists")
+
   // Comments Relations
-  comments      Comment[]     @relation("CommentAuthor")
-  commentLikesNew CommentLikeNew[] @relation("CommentLikeUser")
+  comments          Comment[]          @relation("CommentAuthor")
+  commentLikesNew   CommentLikeNew[]   @relation("CommentLikeUser")
   commentReportsNew CommentReportNew[] @relation("CommentReportUser")
 
   @@index([phone])
@@ -88,51 +88,51 @@ model User {
 }
 
 model Category {
-  id            String    @id @default(cuid())
-  name          String
-  slug          String    @unique
-  icon          String?
-  description   String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  icon        String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  restaurants   Restaurant[]
-  places        TouristPlace[]
+  restaurants Restaurant[]
+  places      TouristPlace[]
 
   @@map("categories")
 }
 
 model Restaurant {
-  id              String                @id @default(cuid())
-  name            String
-  slug            String                @unique
-  description     String?
-  address         String
-  latitude        Float
-  longitude       Float
-  phone           String?
-  priceRange      RestaurantPriceRange  @default(MODERATE)
-  rating          Float                 @default(0)
-  reviewCount     Int                   @default(0)
-  images          String[]              @default([])
-  menuImages      String[]              @default([])
-  workingHours    Json?
-  isVerified      Boolean               @default(false)
-  isActive        Boolean               @default(true)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id           String               @id @default(cuid())
+  name         String
+  slug         String               @unique
+  description  String?
+  address      String
+  latitude     Float
+  longitude    Float
+  phone        String?
+  priceRange   RestaurantPriceRange @default(MODERATE)
+  rating       Float                @default(0)
+  reviewCount  Int                  @default(0)
+  images       String[]             @default([])
+  menuImages   String[]             @default([])
+  workingHours Json?
+  isVerified   Boolean              @default(false)
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
   // Relations
   categoryId      String?
-  category        Category?             @relation(fields: [categoryId], references: [id])
+  category        Category?        @relation(fields: [categoryId], references: [id])
   ownerId         String?
-  owner           User?                 @relation("RestaurantOwner", fields: [ownerId], references: [id])
+  owner           User?            @relation("RestaurantOwner", fields: [ownerId], references: [id])
   reviews         Review[]
   favorites       Favorite[]
   listItems       ListItem[]
   travelPlanItems TravelPlanItem[]
-  comments        Comment[]             @relation("RestaurantComments")
+  comments        Comment[]        @relation("RestaurantComments")
 
   @@index([latitude, longitude])
   @@index([slug])
@@ -141,34 +141,34 @@ model Restaurant {
 }
 
 model TouristPlace {
-  id              String        @id @default(cuid())
-  name            String
-  slug            String        @unique
-  description     String?
-  address         String
-  latitude        Float
-  longitude       Float
-  placeType       PlaceType     @default(OTHER)
-  suitableFor     SuitableFor[] @default([])
-  rating          Float         @default(0)
-  reviewCount     Int           @default(0)
-  images          String[]      @default([])
-  entryFee        Float?
-  isFree          Boolean       @default(true)
-  workingHours    Json?
-  isVerified      Boolean       @default(false)
-  isActive        Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  description  String?
+  address      String
+  latitude     Float
+  longitude    Float
+  placeType    PlaceType     @default(OTHER)
+  suitableFor  SuitableFor[] @default([])
+  rating       Float         @default(0)
+  reviewCount  Int           @default(0)
+  images       String[]      @default([])
+  entryFee     Float?
+  isFree       Boolean       @default(true)
+  workingHours Json?
+  isVerified   Boolean       @default(false)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   // Relations
   categoryId      String?
-  category        Category?     @relation(fields: [categoryId], references: [id])
+  category        Category?        @relation(fields: [categoryId], references: [id])
   reviews         Review[]
   favorites       Favorite[]
   listItems       ListItem[]
   travelPlanItems TravelPlanItem[]
-  comments        Comment[]     @relation("PlaceComments")
+  comments        Comment[]        @relation("PlaceComments")
 
   @@index([latitude, longitude])
   @@index([slug])
@@ -177,21 +177,21 @@ model TouristPlace {
 }
 
 model Review {
-  id              String    @id @default(cuid())
-  rating          Int       // 1-5
-  comment         String?
-  images          String[]  @default([])
-  isVerified      Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id         String   @id @default(cuid())
+  rating     Int // 1-5
+  comment    String?
+  images     String[] @default([])
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  restaurantId    String?
-  restaurant      Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  placeId         String?
-  place           TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId String?
+  restaurant   Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  placeId      String?
+  place        TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([restaurantId])
@@ -200,16 +200,16 @@ model Review {
 }
 
 model Favorite {
-  id              String    @id @default(cuid())
-  createdAt       DateTime  @default(now())
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
 
   // Relations
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  restaurantId    String?
-  restaurant      Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  placeId         String?
-  place           TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId String?
+  restaurant   Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  placeId      String?
+  place        TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, restaurantId])
   @@unique([userId, placeId])
@@ -218,18 +218,18 @@ model Favorite {
 }
 
 model Suggestion {
-  id              String    @id @default(cuid())
-  type            String    // "restaurant" | "place"
-  data            Json      // اطلاعات پیشنهادی
-  comment         String?
-  status          String    @default("pending") // pending, approved, rejected
-  adminComment    String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  type         String // "restaurant" | "place"
+  data         Json // اطلاعات پیشنهادی
+  comment      String?
+  status       String   @default("pending") // pending, approved, rejected
+  adminComment String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -239,27 +239,27 @@ model Suggestion {
 // ==================== Explore Lists Feature ====================
 
 enum ListType {
-  PUBLIC    // لیست‌های عمومی (ادمین)
-  PRIVATE   // لیست‌های شخصی (کاربر)
+  PUBLIC // لیست‌های عمومی (ادمین)
+  PRIVATE // لیست‌های شخصی (کاربر)
 }
 
 model List {
-  id            String    @id @default(cuid())
-  title         String
-  description   String?
-  slug          String    @unique
-  type          ListType  @default(PUBLIC)
-  coverImage    String?
-  keywords      String[]  @default([])
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  slug        String   @unique
+  type        ListType @default(PUBLIC)
+  coverImage  String?
+  keywords    String[] @default([])
 
-  createdById   String
-  createdBy     User      @relation("ListCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User   @relation("ListCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
-  items         ListItem[]
-  likes         ListLike[]
+  items ListItem[]
+  likes ListLike[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([type])
   @@index([createdById])
@@ -267,36 +267,36 @@ model List {
 }
 
 model ListItem {
-  id            String    @id @default(cuid())
-  listId        String
-  list          List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  listId String
+  list   List   @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   // آیتم می‌تونه رستوران یا مکان باشه
-  restaurantId  String?
-  restaurant    Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  placeId       String?
-  place         TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  restaurantId String?
+  restaurant   Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  placeId      String?
+  place        TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
-  order         Int       // ترتیب نمایش در لیست
-  note          String?   // یادداشت ادمین درباره این آیتم
+  order Int // ترتیب نمایش در لیست
+  note  String? // یادداشت ادمین درباره این آیتم
 
-  likes         ItemLike[]
-  dislikes      ItemDislike[]
-  comments      ItemComment[]
+  likes    ItemLike[]
+  dislikes ItemDislike[]
+  comments ItemComment[]
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([listId])
   @@map("list_items")
 }
 
 model ItemLike {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User      @relation("ItemLikes", fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("ItemLikes", fields: [userId], references: [id], onDelete: Cascade)
   itemId    String
-  item      ListItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
+  item      ListItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   @@unique([userId, itemId])
   @@index([itemId])
@@ -304,12 +304,12 @@ model ItemLike {
 }
 
 model ItemDislike {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User      @relation("ItemDislikes", fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("ItemDislikes", fields: [userId], references: [id], onDelete: Cascade)
   itemId    String
-  item      ListItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
+  item      ListItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   @@unique([userId, itemId])
   @@index([itemId])
@@ -317,18 +317,18 @@ model ItemDislike {
 }
 
 model ItemComment {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation("ItemComments", fields: [userId], references: [id], onDelete: Cascade)
-  itemId    String
-  item      ListItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  comment   String
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation("ItemComments", fields: [userId], references: [id], onDelete: Cascade)
+  itemId  String
+  item    ListItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  comment String
 
-  likes     CommentLike[]
-  reports   CommentReport[]
+  likes   CommentLike[]
+  reports CommentReport[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([itemId])
   @@map("item_comments")
@@ -376,21 +376,21 @@ model ListLike {
 }
 
 model ItemSuggestion {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation("ItemSuggestions", fields: [userId], references: [id], onDelete: Cascade)
-  listId      String?  // لیست پیشنهادی (اختیاری)
+  id     String  @id @default(cuid())
+  userId String
+  user   User    @relation("ItemSuggestions", fields: [userId], references: [id], onDelete: Cascade)
+  listId String? // لیست پیشنهادی (اختیاری)
 
   // آیتم پیشنهادی
   restaurantId String?
   placeId      String?
 
-  note        String?  // توضیحات کاربر
-  adminNote   String?  // پاسخ ادمین
-  status      String   @default("pending") // pending, approved, rejected
+  note      String? // توضیحات کاربر
+  adminNote String? // پاسخ ادمین
+  status    String  @default("pending") // pending, approved, rejected
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -399,15 +399,24 @@ model ItemSuggestion {
 
 // ==================== Settings ====================
 
+enum SettingCategory {
+  GENERAL
+  API
+  STORAGE
+  MAP
+  DATABASE
+  COMMENT_SCORES // تنظیمات امتیازدهی کامنت‌ها
+}
+
 model Setting {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String?
-  category  String   @default("general") // general, api, storage, etc.
+  id          String          @id @default(cuid())
+  key         String          @unique
+  value       String?
+  category    SettingCategory @default(GENERAL)
   description String?
-  isSecret  Boolean  @default(false) // برای کلیدهای API که نباید نمایش داده شوند
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isSecret    Boolean         @default(false) // برای کلیدهای API که نباید نمایش داده شوند
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   @@index([category])
   @@index([key])
@@ -417,9 +426,9 @@ model Setting {
 // ==================== Travel Planning ====================
 
 enum PlanType {
-  QUICK      // برنامه فوری
-  DAILY      // برنامه روزانه
-  TRIP       // برنامه کلی چندروزه
+  QUICK // برنامه فوری
+  DAILY // برنامه روزانه
+  TRIP // برنامه کلی چندروزه
 }
 
 enum TravelType {
@@ -431,9 +440,9 @@ enum TravelType {
 }
 
 enum AvailableTime {
-  ONE_TO_TWO_HOURS    // 1-2 ساعت
-  HALF_DAY            // نیم روز
-  FULL_DAY            // کل روز
+  ONE_TO_TWO_HOURS // 1-2 ساعت
+  HALF_DAY // نیم روز
+  FULL_DAY // کل روز
 }
 
 enum Budget {
@@ -472,47 +481,47 @@ enum PlanItemType {
 }
 
 model TravelPlan {
-  id              String        @id @default(cuid())
-  userId          String
-  user            User          @relation("TravelPlans", fields: [userId], references: [id], onDelete: Cascade)
-  
-  title           String?
-  description     String?
-  
-  planType        PlanType      // QUICK, DAILY, TRIP
-  travelType      TravelType?
-  availableTime   AvailableTime? // برای Quick Plan
-  travelStyle     TravelStyle?  // برای Trip Plan
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("TravelPlans", fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String?
+  description String?
+
+  planType      PlanType // QUICK, DAILY, TRIP
+  travelType    TravelType?
+  availableTime AvailableTime? // برای Quick Plan
+  travelStyle   TravelStyle? // برای Trip Plan
+
   // موقعیت و محدوده
-  latitude        Float
-  longitude       Float
-  address         String
-  searchRadius    Int           @default(5) // محدوده جستجو به کیلومتر (0-50)
-  
+  latitude     Float
+  longitude    Float
+  address      String
+  searchRadius Int    @default(5) // محدوده جستجو به کیلومتر (0-50)
+
   // زمان‌بندی
-  startDate       DateTime?
-  endDate         DateTime?
-  startTime       String?       // برای Daily Plan (مثلاً "10:00")
-  endTime         String?       // برای Daily Plan (مثلاً "22:00")
-  
+  startDate DateTime?
+  endDate   DateTime?
+  startTime String? // برای Daily Plan (مثلاً "10:00")
+  endTime   String? // برای Daily Plan (مثلاً "22:00")
+
   // ترجیحات
-  budget          Budget?       @default(ANY)
-  preferences     Json?        // اولویت‌ها (طبیعت، غذا، خرید و...)
-  interests       Json?        // علایق انتخاب شده
-  
+  budget      Budget? @default(ANY)
+  preferences Json? // اولویت‌ها (طبیعت، غذا، خرید و...)
+  interests   Json? // علایق انتخاب شده
+
   // خلاصه برنامه
-  estimatedCost   Float?
-  totalDistance   Float?       // مسافت کل به کیلومتر
-  totalDuration   Int?         // مدت کل به دقیقه
-  
-  status          PlanStatus   @default(DRAFT)
-  isShared        Boolean      @default(false)
-  
-  items           TravelPlanItem[]
-  
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  estimatedCost Float?
+  totalDistance Float? // مسافت کل به کیلومتر
+  totalDuration Int? // مدت کل به دقیقه
+
+  status   PlanStatus @default(DRAFT)
+  isShared Boolean    @default(false)
+
+  items TravelPlanItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([planType])
@@ -521,33 +530,33 @@ model TravelPlan {
 }
 
 model TravelPlanItem {
-  id              String        @id @default(cuid())
-  planId          String
-  plan            TravelPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
-  
-  order           Int           // ترتیب در برنامه
-  dayNumber       Int?          // برای Trip Plan: روز 1، 2، 3...
-  
-  timeSlot        TimeSlot?     // صبح، ظهر، عصر، شب
-  scheduledTime   DateTime?     // زمان دقیق
-  duration        Int?          // مدت زمان در دقیقه
-  
-  itemType        PlanItemType
-  restaurantId    String?
-  restaurant      Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  placeId         String?
-  place           TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
-  travelDuration  Int?          // مدت زمان سفر به مقصد بعدی (برای TRAVEL)
-  distance        Float?        // فاصله تا مقصد بعدی
-  
-  notes           String?       // یادداشت کاربر
-  tips            String?       // نکات و توصیه‌ها
-  
-  isCompleted     Boolean       @default(false)
+  id     String     @id @default(cuid())
+  planId String
+  plan   TravelPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  order     Int // ترتیب در برنامه
+  dayNumber Int? // برای Trip Plan: روز 1، 2، 3...
+
+  timeSlot      TimeSlot? // صبح، ظهر، عصر، شب
+  scheduledTime DateTime? // زمان دقیق
+  duration      Int? // مدت زمان در دقیقه
+
+  itemType     PlanItemType
+  restaurantId String?
+  restaurant   Restaurant?   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  placeId      String?
+  place        TouristPlace? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  travelDuration Int? // مدت زمان سفر به مقصد بعدی (برای TRAVEL)
+  distance       Float? // فاصله تا مقصد بعدی
+
+  notes String? // یادداشت کاربر
+  tips  String? // نکات و توصیه‌ها
+
+  isCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([planId])
   @@index([order])
@@ -576,22 +585,22 @@ enum Season {
 }
 
 model TravelChecklistTemplate {
-  id          String   @id @default(cuid())
+  id          String               @id @default(cuid())
   title       String
   description String?
   icon        String?
   travelType  ChecklistTravelType?
-  season      Season?  @default(ALL)
-  isActive    Boolean  @default(true)
-  
+  season      Season?              @default(ALL)
+  isActive    Boolean              @default(true)
+
   createdById String
-  createdBy   User     @relation("ChecklistTemplateCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  
-  items       ChecklistTemplateItem[]
-  checklists  TravelChecklist[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdBy   User   @relation("ChecklistTemplateCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  items      ChecklistTemplateItem[]
+  checklists TravelChecklist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([travelType])
   @@index([isActive])
@@ -600,25 +609,25 @@ model TravelChecklistTemplate {
 }
 
 model TravelChecklist {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation("UserChecklists", fields: [userId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserChecklists", fields: [userId], references: [id], onDelete: Cascade)
+
   title       String
   description String?
-  notes       String?  // یادداشت کلی برای چک‌لیست
+  notes       String? // یادداشت کلی برای چک‌لیست
   templateId  String?
   template    TravelChecklistTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  
-  travelType  ChecklistTravelType?
-  season      Season?
-  isShared    Boolean  @default(false)
-  
-  items       ChecklistItem[]
-  comments    Comment[] @relation("ChecklistComments")
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  travelType ChecklistTravelType?
+  season     Season?
+  isShared   Boolean              @default(false)
+
+  items    ChecklistItem[]
+  comments Comment[]       @relation("ChecklistComments")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([travelType])
@@ -627,17 +636,17 @@ model TravelChecklist {
 }
 
 model ChecklistTemplateItem {
-  id              String   @id @default(cuid())
-  name            String
-  description     String?
-  order           Int      @default(0)
-  isRequired      Boolean  @default(false)
-  
-  templateId      String
-  template        TravelChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  order       Int     @default(0)
+  isRequired  Boolean @default(false)
+
+  templateId String
+  template   TravelChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([templateId])
   @@index([order])
@@ -645,21 +654,21 @@ model ChecklistTemplateItem {
 }
 
 model ChecklistItem {
-  id              String   @id @default(cuid())
-  name            String
-  description     String?
-  order           Int      @default(0)
-  isRequired      Boolean  @default(false)
-  isChecked       Boolean  @default(false)
-  notes           String?
-  
-  checklistId     String
-  checklist       TravelChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
-  
-  templateItemId  String? // برای ردیابی آیتم اصلی در قالب (اختیاری)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  order       Int     @default(0)
+  isRequired  Boolean @default(false)
+  isChecked   Boolean @default(false)
+  notes       String?
+
+  checklistId String
+  checklist   TravelChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  templateItemId String? // برای ردیابی آیتم اصلی در قالب (اختیاری)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([checklistId])
   @@index([order])
@@ -669,10 +678,10 @@ model ChecklistItem {
 // ==================== Comments System ====================
 
 enum CommentStatus {
-  ACTIVE      // نمایش داده می‌شود
-  CENSORED    // کلمات بد دارد و ستاره‌گذاری شده
-  HIDDEN      // مخفی شده توسط ادمین
-  DELETED     // حذف شده
+  ACTIVE // نمایش داده می‌شود
+  CENSORED // کلمات بد دارد و ستاره‌گذاری شده
+  HIDDEN // مخفی شده توسط ادمین
+  DELETED // حذف شده
 }
 
 enum CommentItemType {
@@ -682,51 +691,51 @@ enum CommentItemType {
 }
 
 enum ReportReason {
-  OFFENSIVE_CONTENT  // محتوای توهین‌آمیز
-  SPAM              // اسپم
-  ADVERTISEMENT     // تبلیغات
-  FALSE_INFO        // اطلاعات غلط
-  BAD_WORDS         // کلمات بد
-  OTHER             // دیگر موارد
+  OFFENSIVE_CONTENT // محتوای توهین‌آمیز
+  SPAM // اسپم
+  ADVERTISEMENT // تبلیغات
+  FALSE_INFO // اطلاعات غلط
+  BAD_WORDS // کلمات بد
+  OTHER // دیگر موارد
 }
 
 enum BadWordSeverity {
-  MILD      // خفیف
-  MODERATE  // متوسط
-  SEVERE    // شدید
+  MILD // خفیف
+  MODERATE // متوسط
+  SEVERE // شدید
 }
 
 model Comment {
-  id              String            @id @default(cuid())
-  userId          String
-  user            User              @relation("CommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("CommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
   // نوع آیتم و ID
-  itemType        CommentItemType
-  restaurantId    String?
-  restaurant      Restaurant?       @relation("RestaurantComments", fields: [restaurantId], references: [id], onDelete: Cascade)
-  placeId         String?
-  place           TouristPlace?     @relation("PlaceComments", fields: [placeId], references: [id], onDelete: Cascade)
-  checklistId     String?
-  checklist       TravelChecklist?  @relation("ChecklistComments", fields: [checklistId], references: [id], onDelete: Cascade)
-  
+  itemType     CommentItemType
+  restaurantId String?
+  restaurant   Restaurant?      @relation("RestaurantComments", fields: [restaurantId], references: [id], onDelete: Cascade)
+  placeId      String?
+  place        TouristPlace?    @relation("PlaceComments", fields: [placeId], references: [id], onDelete: Cascade)
+  checklistId  String?
+  checklist    TravelChecklist? @relation("ChecklistComments", fields: [checklistId], references: [id], onDelete: Cascade)
+
   // محتوا
-  content         String            // متن اصلی (فقط برای ادمین)
-  censoredContent String            // متن سانسور شده (برای نمایش)
-  hasBadWords     Boolean           @default(false) // آیا کلمات بد دارد
-  status          CommentStatus    @default(ACTIVE)
-  
+  content         String // متن اصلی (فقط برای ادمین)
+  censoredContent String // متن سانسور شده (برای نمایش)
+  hasBadWords     Boolean       @default(false) // آیا کلمات بد دارد
+  status          CommentStatus @default(ACTIVE)
+
   // آمار
-  likeCount       Int               @default(0)
-  reportCount     Int               @default(0)
-  
+  likeCount   Int @default(0)
+  reportCount Int @default(0)
+
   // Relations
-  likes           CommentLikeNew[]
-  reports         CommentReportNew[]
-  
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  
+  likes   CommentLikeNew[]
+  reports CommentReportNew[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
   @@index([restaurantId])
   @@index([placeId])
@@ -742,12 +751,12 @@ model Comment {
 }
 
 model CommentLikeNew {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User      @relation("CommentLikeUser", fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("CommentLikeUser", fields: [userId], references: [id], onDelete: Cascade)
   commentId String
-  comment   Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   @@unique([userId, commentId])
   @@index([commentId])
@@ -755,14 +764,14 @@ model CommentLikeNew {
 }
 
 model CommentReportNew {
-  id        String        @id @default(cuid())
+  id        String       @id @default(cuid())
   userId    String
-  user      User          @relation("CommentReportUser", fields: [userId], references: [id], onDelete: Cascade)
+  user      User         @relation("CommentReportUser", fields: [userId], references: [id], onDelete: Cascade)
   commentId String
-  comment   Comment       @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  comment   Comment      @relation(fields: [commentId], references: [id], onDelete: Cascade)
   reason    ReportReason
-  status    String        @default("pending") // pending, reviewed, resolved
-  createdAt DateTime      @default(now())
+  status    String       @default("pending") // pending, reviewed, resolved
+  createdAt DateTime     @default(now())
 
   @@index([commentId])
   @@index([status])
@@ -772,12 +781,12 @@ model CommentReportNew {
 // ==================== Bad Words Management ====================
 
 model BadWord {
-  id        String            @id @default(cuid())
-  word      String            @unique
-  severity  BadWordSeverity   @default(MODERATE)
-  isActive  Boolean           @default(true)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id        String          @id @default(cuid())
+  word      String          @unique
+  severity  BadWordSeverity @default(MODERATE)
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   @@index([word])
   @@index([isActive])

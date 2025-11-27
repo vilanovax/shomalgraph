@@ -873,7 +873,7 @@ async function main() {
     data: commentScoreSettings.map((setting) => ({
       key: setting.key,
       value: setting.value,
-      category: "comment_scores",
+      category: "COMMENT_SCORES" as const,
       description: setting.description,
       isSecret: false,
     })),

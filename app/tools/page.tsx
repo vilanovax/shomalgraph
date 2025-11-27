@@ -46,7 +46,7 @@ const tools = [
     description: "وضعیت آب و هوا",
     icon: Cloud,
     color: "from-cyan-500 to-cyan-600",
-    href: "/weather",
+    href: "/tools/weather",
   },
   {
     id: "calculator",

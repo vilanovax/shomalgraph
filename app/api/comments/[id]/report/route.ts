@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { applyPenalty } from "@/lib/utils/bad-words";
+import { SettingCategory } from "@prisma/client";
 
 // Helper function to get score settings
 async function getScoreSettings() {
   const settings = await db.setting.findMany({
     where: {
-      category: "comment_scores",
+      category: SettingCategory.COMMENT_SCORES,
     },
   });
 

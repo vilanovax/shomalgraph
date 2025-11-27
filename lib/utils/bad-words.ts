@@ -68,7 +68,7 @@ export async function filterBadWords(text: string): Promise<{
 async function getScoreSettings() {
   const settings = await db.setting.findMany({
     where: {
-      category: "comment_scores",
+      category: "COMMENT_SCORES",
     },
   });
 
