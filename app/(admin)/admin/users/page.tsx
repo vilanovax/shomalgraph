@@ -21,8 +21,16 @@ import { formatDate } from "@/lib/utils";
 
 async function getUsers() {
   try {
+    // بهینه‌سازی: استفاده از select و محدود کردن به 30 کاربر
     const users = await db.user.findMany({
-      include: {
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        role: true,
+        avatar: true,
+        score: true,
+        createdAt: true,
         _count: {
           select: {
             reviews: true,
@@ -34,7 +42,7 @@ async function getUsers() {
       orderBy: {
         createdAt: "desc",
       },
-      take: 50,
+      take: 30, // کاهش از 50 به 30
     });
     return users;
   } catch (error) {
@@ -43,14 +51,38 @@ async function getUsers() {
   }
 }
 
-export default async function UsersPage() {
-  const users = await getUsers();
+async function getUserStats() {
+  try {
+    // محاسبه stats در دیتابیس به جای client-side (خیلی سریع‌تر)
+    const [adminCount, businessOwnerCount, regularUserCount] = await Promise.all([
+      db.user.count({ where: { role: "ADMIN" } }),
+      db.user.count({ where: { role: "BUSINESS_OWNER" } }),
+      db.user.count({ where: { role: "USER" } }),
+    ]);
 
-  const adminCount = users.filter((u) => u.role === "ADMIN").length;
-  const businessOwnerCount = users.filter(
-    (u) => u.role === "BUSINESS_OWNER"
-  ).length;
-  const regularUserCount = users.filter((u) => u.role === "USER").length;
+    return {
+      adminCount,
+      businessOwnerCount,
+      regularUserCount,
+    };
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    return {
+      adminCount: 0,
+      businessOwnerCount: 0,
+      regularUserCount: 0,
+    };
+  }
+}
+
+export default async function UsersPage() {
+  // Parallel data fetching برای بهبود سرعت
+  const [users, stats] = await Promise.all([
+    getUsers(),
+    getUserStats(),
+  ]);
+
+  const { adminCount, businessOwnerCount, regularUserCount } = stats;
 
   const roleStats = [
     {

@@ -8,16 +8,20 @@ export async function GET(request: NextRequest) {
     const travelType = searchParams.get("travelType");
     const season = searchParams.get("season");
 
-    const where: any = {
+    const where: {
+      isActive: boolean;
+      travelType?: string;
+      season?: string;
+    } = {
       isActive: true,
     };
 
     if (travelType) {
-      where.travelType = travelType;
+      where.travelType = travelType as any;
     }
 
     if (season) {
-      where.season = season;
+      where.season = season as any;
     }
 
     const templates = await db.travelChecklistTemplate.findMany({

@@ -90,7 +90,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    let items: any[] = [];
+    let items: Array<{
+      restaurantId?: string;
+      placeId?: string;
+      order: number;
+      dayNumber: number;
+      timeSlot: string | null;
+      notes: string | null;
+      tips: string | null;
+      isCompleted: boolean;
+    }> = [];
 
     // تولید برنامه بر اساس نوع
     if (planType === "QUICK") {

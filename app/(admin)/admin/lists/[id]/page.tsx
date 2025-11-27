@@ -20,9 +20,18 @@ import { DeleteItemButton } from "./DeleteItemButton";
 
 async function getList(id: string) {
   try {
+    // بهینه‌سازی: استفاده از select به جای include
     const list = await db.list.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        slug: true,
+        type: true,
+        coverImage: true,
+        keywords: true,
+        createdAt: true,
         createdBy: {
           select: {
             id: true,
@@ -31,25 +40,44 @@ async function getList(id: string) {
           },
         },
         items: {
-          include: {
+          select: {
+            id: true,
+            order: true,
+            note: true,
             restaurant: {
-              include: {
-                category: true,
-                _count: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                address: true,
+                rating: true,
+                priceRange: true,
+                category: {
                   select: {
-                    reviews: true,
+                    id: true,
+                    name: true,
                   },
                 },
+                reviewCount: true,
               },
             },
             place: {
-              include: {
-                category: true,
-                _count: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                address: true,
+                rating: true,
+                placeType: true,
+                isFree: true,
+                entryFee: true,
+                category: {
                   select: {
-                    reviews: true,
+                    id: true,
+                    name: true,
                   },
                 },
+                reviewCount: true,
               },
             },
           },

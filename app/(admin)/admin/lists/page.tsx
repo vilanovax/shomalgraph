@@ -8,15 +8,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Plus, List, Search, Heart, MapPin, UtensilsCrossed } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SeedListsButton } from "./SeedListsButton";
 
 async function getLists() {
   try {
+    // بهینه‌سازی: استفاده از select و محدود کردن به 50 لیست
     const lists = await db.list.findMany({
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        slug: true,
+        type: true,
+        coverImage: true,
+        keywords: true,
+        createdAt: true,
         createdBy: {
           select: {
             id: true,
@@ -34,6 +42,7 @@ async function getLists() {
       orderBy: {
         createdAt: "desc",
       },
+      take: 50, // محدود کردن تعداد
     });
     return lists;
   } catch (error) {
@@ -128,9 +137,6 @@ export default async function ListsPage() {
                         </CardDescription>
                       )}
                     </div>
-                    <Badge className="shrink-0 bg-purple-100 text-purple-700 border-purple-300">
-                      {list.type === "PUBLIC" ? "عمومی" : "شخصی"}
-                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 flex-1 flex flex-col">
@@ -148,12 +154,6 @@ export default async function ListsPage() {
                         {list._count.likes}
                       </span>
                     </div>
-                  </div>
-                  <div className="pt-2 border-t text-xs text-muted-foreground">
-                    <p>ایجاد شده توسط: {list.createdBy.name || list.createdBy.phone}</p>
-                    <p className="mt-1">
-                      {new Date(list.createdAt).toLocaleDateString("fa-IR")}
-                    </p>
                   </div>
                 </CardContent>
               </Card>

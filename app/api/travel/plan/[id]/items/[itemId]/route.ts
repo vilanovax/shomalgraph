@@ -49,7 +49,14 @@ export async function PUT(
       isCompleted,
     } = body;
 
-    const updateData: any = {};
+    const updateData: {
+      order?: number;
+      dayNumber?: number;
+      timeSlot?: TimeSlot | null;
+      notes?: string | null;
+      tips?: string | null;
+      isCompleted?: boolean;
+    } = {};
 
     if (order !== undefined) updateData.order = order;
     if (dayNumber !== undefined) updateData.dayNumber = dayNumber;

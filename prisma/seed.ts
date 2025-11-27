@@ -6,6 +6,11 @@ async function main() {
   console.log("🌱 شروع seed کردن دیتابیس...");
 
   // حذف دیتاهای قبلی (به ترتیب وابستگی)
+  await prisma.commentReportNew.deleteMany();
+  await prisma.commentLikeNew.deleteMany();
+  await prisma.comment.deleteMany();
+  await prisma.badWord.deleteMany();
+  await prisma.setting.deleteMany();
   await prisma.checklistItem.deleteMany();
   await prisma.checklistTemplateItem.deleteMany();
   await prisma.travelChecklist.deleteMany();
@@ -822,6 +827,118 @@ async function main() {
 
   console.log("✅ قالب‌های چک‌لیست ایجاد شدند");
 
+  // ایجاد کلمات بد نمونه
+  const badWords = await Promise.all([
+    prisma.badWord.create({
+      data: {
+        word: "فحش",
+        severity: "SEVERE",
+        isActive: true,
+      },
+    }),
+    prisma.badWord.create({
+      data: {
+        word: "بد",
+        severity: "MILD",
+        isActive: true,
+      },
+    }),
+    prisma.badWord.create({
+      data: {
+        word: "ناسزا",
+        severity: "MODERATE",
+        isActive: true,
+      },
+    }),
+  ]);
+
+  console.log(`✅ ${badWords.length} کلمه بد نمونه ایجاد شدند`);
+
+  // ایجاد تنظیمات امتیازدهی کامنت‌ها
+  const commentScoreSettings = [
+    { key: "bad_words_penalty", value: "-5", description: "امتیاز منفی برای استفاده از کلمات بد" },
+    { key: "report_penalty", value: "-3", description: "امتیاز منفی برای هر ریپورت" },
+    { key: "deleted_by_admin_penalty", value: "-10", description: "امتیاز منفی برای حذف کامنت توسط ادمین" },
+    { key: "like_bonus", value: "1", description: "امتیاز مثبت برای هر لایک" },
+    { key: "ban_threshold_1", value: "-10", description: "آستانه اول برای ممنوعیت (1 روز)" },
+    { key: "ban_threshold_2", value: "-15", description: "آستانه دوم برای ممنوعیت (3 روز)" },
+    { key: "ban_threshold_3", value: "-20", description: "آستانه سوم برای ممنوعیت (7 روز + ممنوعیت مکان)" },
+    { key: "ban_days_1", value: "1", description: "تعداد روز ممنوعیت برای آستانه اول" },
+    { key: "ban_days_2", value: "3", description: "تعداد روز ممنوعیت برای آستانه دوم" },
+    { key: "ban_days_3", value: "7", description: "تعداد روز ممنوعیت برای آستانه سوم" },
+    { key: "place_ban_days", value: "30", description: "تعداد روز ممنوعیت اضافه کردن مکان" },
+  ];
+
+  await prisma.setting.createMany({
+    data: commentScoreSettings.map((setting) => ({
+      key: setting.key,
+      value: setting.value,
+      category: "comment_scores",
+      description: setting.description,
+      isSecret: false,
+    })),
+  });
+
+  console.log(`✅ ${commentScoreSettings.length} تنظیمات امتیازدهی ایجاد شدند`);
+
+  // ایجاد کامنت‌های نمونه
+  const sampleComments = [
+    {
+      userId: user1.id,
+      itemType: "RESTAURANT" as const,
+      restaurantId: restaurants[0].id,
+      content: "رستوران عالی با غذاهای خوشمزه! حتماً دوباره می‌آیم.",
+      censoredContent: "رستوران عالی با غذاهای خوشمزه! حتماً دوباره می‌آیم.",
+      hasBadWords: false,
+      status: "ACTIVE" as const,
+      likeCount: 5,
+      reportCount: 0,
+    },
+    {
+      userId: user2.id,
+      itemType: "RESTAURANT" as const,
+      restaurantId: restaurants[0].id,
+      content: "کیفیت غذا خوب بود ولی قیمت‌ها کمی بالا بود.",
+      censoredContent: "کیفیت غذا خوب بود ولی قیمت‌ها کمی بالا بود.",
+      hasBadWords: false,
+      status: "ACTIVE" as const,
+      likeCount: 3,
+      reportCount: 0,
+    },
+    {
+      userId: user1.id,
+      itemType: "PLACE" as const,
+      placeId: places[0].id,
+      content: "جنگل ابر واقعاً زیباست! هوای خنک و طبیعت بکر.",
+      censoredContent: "جنگل ابر واقعاً زیباست! هوای خنک و طبیعت بکر.",
+      hasBadWords: false,
+      status: "ACTIVE" as const,
+      likeCount: 8,
+      reportCount: 0,
+    },
+    {
+      userId: user2.id,
+      itemType: "PLACE" as const,
+      placeId: places[1].id,
+      content: "آبشار لاتون عالی بود. مسیر پیاده‌روی هم خوب بود.",
+      censoredContent: "آبشار لاتون عالی بود. مسیر پیاده‌روی هم خوب بود.",
+      hasBadWords: false,
+      status: "ACTIVE" as const,
+      likeCount: 6,
+      reportCount: 0,
+    },
+  ];
+
+  const createdComments = await Promise.all(
+    sampleComments.map((comment) =>
+      prisma.comment.create({
+        data: comment,
+      })
+    )
+  );
+
+  console.log(`✅ ${createdComments.length} کامنت نمونه ایجاد شدند`);
+
   console.log("\n🎉 Seed با موفقیت انجام شد!");
   console.log("📊 خلاصه:");
   console.log(`   👥 کاربران: 4 (1 ادمین، 1 صاحب کسب‌وکار، 2 کاربر عادی)`);
@@ -832,6 +949,9 @@ async function main() {
   console.log(`   ⭐ نظرات: 4`);
   console.log(`   💡 پیشنهادات: 1`);
   console.log(`   📋 قالب‌های چک‌لیست: 3`);
+  console.log(`   💬 کامنت‌ها: ${createdComments.length}`);
+  console.log(`   🚫 کلمات بد: ${badWords.length}`);
+  console.log(`   ⚙️  تنظیمات: ${commentScoreSettings.length}`);
   console.log("\n📝 اطلاعات ورود:");
   console.log(`   ادمین: 09121941532 (OTP: 123456)`);
   console.log(`   صاحب کسب‌وکار: 09129876543 (OTP: 123456)`);

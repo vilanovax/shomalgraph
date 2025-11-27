@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
     const planType = searchParams.get("planType");
     const status = searchParams.get("status");
 
-    const where: any = {
+    const where: {
+      userId: string;
+      planType?: string;
+      status?: string;
+    } = {
       userId: session.user.id,
     };
 

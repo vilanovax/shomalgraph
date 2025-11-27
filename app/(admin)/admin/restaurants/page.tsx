@@ -15,23 +15,30 @@ import { SeedRestaurantsButton } from "./SeedRestaurantsButton";
 
 async function getRestaurants() {
   try {
-    // در پنل ادمین همه رستوران‌ها را نمایش می‌دهیم (فعال و غیرفعال)
+    // بهینه‌سازی: استفاده از select به جای include و محدود کردن به 50 رستوران
     const restaurants = await db.restaurant.findMany({
-      include: {
-        category: true,
-        _count: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        address: true,
+        rating: true,
+        priceRange: true,
+        isActive: true,
+        category: {
           select: {
-            reviews: true,
+            id: true,
+            name: true,
           },
         },
+        reviewCount: true, // استفاده از فیلد موجود به جای _count
       },
       orderBy: {
         createdAt: "desc",
       },
-      take: 100,
+      take: 50, // کاهش از 100 به 50
     });
     
-    console.log(`✅ تعداد رستوران‌های دریافت شده: ${restaurants.length}`);
     return restaurants;
   } catch (error) {
     console.error("❌ خطا در دریافت رستوران‌ها:", error);
@@ -168,7 +175,7 @@ export default async function RestaurantsPage() {
                         {restaurant.rating.toFixed(1)}
                       </span>
                       <span className="text-muted-foreground text-xs">
-                        ({restaurant._count.reviews})
+                        ({restaurant.reviewCount})
                       </span>
                     </div>
                     <Badge

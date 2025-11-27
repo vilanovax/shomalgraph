@@ -15,14 +15,27 @@ import { SeedPlacesButton } from "./SeedPlacesButton";
 
 async function getPlaces() {
   try {
+    // بهینه‌سازی: استفاده از select به جای include
     const places = await db.touristPlace.findMany({
-      include: {
-        category: true,
-        _count: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        address: true,
+        placeType: true,
+        suitableFor: true,
+        rating: true,
+        isFree: true,
+        entryFee: true,
+        isActive: true,
+        category: {
           select: {
-            reviews: true,
+            id: true,
+            name: true,
           },
         },
+        reviewCount: true, // استفاده از فیلد موجود به جای _count
       },
       orderBy: {
         createdAt: "desc",
@@ -205,7 +218,7 @@ export default async function PlacesPage() {
                         {place.rating.toFixed(1)}
                       </span>
                       <span className="text-muted-foreground text-xs">
-                        ({place._count.reviews})
+                        ({place.reviewCount})
                       </span>
                     </div>
                     <Badge

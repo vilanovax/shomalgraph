@@ -132,7 +132,15 @@ export async function PUT(
       endTime,
     } = body;
 
-    const updateData: any = {};
+    const updateData: {
+      title?: string;
+      description?: string | null;
+      status?: string;
+      startDate?: Date | null;
+      endDate?: Date | null;
+      startTime?: string | null;
+      endTime?: string | null;
+    } = {};
 
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;

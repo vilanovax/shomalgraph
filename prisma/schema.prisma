@@ -47,6 +47,14 @@ model User {
   name          String?
   avatar        String?
   role          UserRole  @default(USER)
+  
+  // امتیاز و جریمه
+  score         Int       @default(0) // امتیاز کاربر (مثبت یا منفی)
+  commentBanUntil DateTime? // تاریخ پایان ممنوعیت کامنت
+  isCommentBanned Boolean @default(false) // آیا در حال حاضر ممنوع است
+  placeAddBanUntil DateTime? // تاریخ پایان ممنوعیت اضافه کردن مکان
+  isPlaceAddBanned Boolean @default(false) // آیا از اضافه کردن مکان محروم است
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -68,8 +76,14 @@ model User {
   travelPlans   TravelPlan[]  @relation("TravelPlans")
   checklistTemplates TravelChecklistTemplate[] @relation("ChecklistTemplateCreator")
   checklists    TravelChecklist[] @relation("UserChecklists")
+  
+  // Comments Relations
+  comments      Comment[]     @relation("CommentAuthor")
+  commentLikesNew CommentLikeNew[] @relation("CommentLikeUser")
+  commentReportsNew CommentReportNew[] @relation("CommentReportUser")
 
   @@index([phone])
+  @@index([score])
   @@map("users")
 }
 
@@ -118,6 +132,7 @@ model Restaurant {
   favorites       Favorite[]
   listItems       ListItem[]
   travelPlanItems TravelPlanItem[]
+  comments        Comment[]             @relation("RestaurantComments")
 
   @@index([latitude, longitude])
   @@index([slug])
@@ -153,6 +168,7 @@ model TouristPlace {
   favorites       Favorite[]
   listItems       ListItem[]
   travelPlanItems TravelPlanItem[]
+  comments        Comment[]     @relation("PlaceComments")
 
   @@index([latitude, longitude])
   @@index([slug])
@@ -599,6 +615,7 @@ model TravelChecklist {
   isShared    Boolean  @default(false)
   
   items       ChecklistItem[]
+  comments    Comment[] @relation("ChecklistComments")
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -647,4 +664,122 @@ model ChecklistItem {
   @@index([checklistId])
   @@index([order])
   @@map("checklist_items")
+}
+
+// ==================== Comments System ====================
+
+enum CommentStatus {
+  ACTIVE      // نمایش داده می‌شود
+  CENSORED    // کلمات بد دارد و ستاره‌گذاری شده
+  HIDDEN      // مخفی شده توسط ادمین
+  DELETED     // حذف شده
+}
+
+enum CommentItemType {
+  RESTAURANT
+  PLACE
+  CHECKLIST
+}
+
+enum ReportReason {
+  OFFENSIVE_CONTENT  // محتوای توهین‌آمیز
+  SPAM              // اسپم
+  ADVERTISEMENT     // تبلیغات
+  FALSE_INFO        // اطلاعات غلط
+  BAD_WORDS         // کلمات بد
+  OTHER             // دیگر موارد
+}
+
+enum BadWordSeverity {
+  MILD      // خفیف
+  MODERATE  // متوسط
+  SEVERE    // شدید
+}
+
+model Comment {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation("CommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // نوع آیتم و ID
+  itemType        CommentItemType
+  restaurantId    String?
+  restaurant      Restaurant?       @relation("RestaurantComments", fields: [restaurantId], references: [id], onDelete: Cascade)
+  placeId         String?
+  place           TouristPlace?     @relation("PlaceComments", fields: [placeId], references: [id], onDelete: Cascade)
+  checklistId     String?
+  checklist       TravelChecklist?  @relation("ChecklistComments", fields: [checklistId], references: [id], onDelete: Cascade)
+  
+  // محتوا
+  content         String            // متن اصلی (فقط برای ادمین)
+  censoredContent String            // متن سانسور شده (برای نمایش)
+  hasBadWords     Boolean           @default(false) // آیا کلمات بد دارد
+  status          CommentStatus    @default(ACTIVE)
+  
+  // آمار
+  likeCount       Int               @default(0)
+  reportCount     Int               @default(0)
+  
+  // Relations
+  likes           CommentLikeNew[]
+  reports         CommentReportNew[]
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@index([userId])
+  @@index([restaurantId])
+  @@index([placeId])
+  @@index([checklistId])
+  @@index([itemType])
+  @@index([status])
+  @@index([hasBadWords])
+  @@index([createdAt])
+  @@index([itemType, status, createdAt]) // Composite index برای query های رایج
+  @@index([restaurantId, status, createdAt]) // برای رستوران‌ها
+  @@index([placeId, status, createdAt]) // برای مکان‌ها
+  @@map("comments")
+}
+
+model CommentLikeNew {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation("CommentLikeUser", fields: [userId], references: [id], onDelete: Cascade)
+  commentId String
+  comment   Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+  @@map("comment_likes_new")
+}
+
+model CommentReportNew {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation("CommentReportUser", fields: [userId], references: [id], onDelete: Cascade)
+  commentId String
+  comment   Comment       @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reason    ReportReason
+  status    String        @default("pending") // pending, reviewed, resolved
+  createdAt DateTime      @default(now())
+
+  @@index([commentId])
+  @@index([status])
+  @@map("comment_reports_new")
+}
+
+// ==================== Bad Words Management ====================
+
+model BadWord {
+  id        String            @id @default(cuid())
+  word      String            @unique
+  severity  BadWordSeverity   @default(MODERATE)
+  isActive  Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([word])
+  @@index([isActive])
+  @@map("bad_words")
 }

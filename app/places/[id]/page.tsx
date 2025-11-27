@@ -1,42 +1,46 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ArrowRight,
   MapPin,
   Star,
-  Clock,
   Heart,
   Mountain,
   ExternalLink,
   Users,
+  MessageCircle,
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
 import { BookmarkButton } from "@/components/ui/bookmark-button";
+import { CommentsSectionWrapper } from "@/components/comments/CommentsSectionWrapper";
 
 async function getPlaceDetail(id: string) {
   try {
     const place = await db.touristPlace.findUnique({
       where: { id },
-      include: {
-        category: true,
-        reviews: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                phone: true,
-              },
-            },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        address: true,
+        latitude: true,
+        longitude: true,
+        placeType: true,
+        suitableFor: true,
+        rating: true,
+        isFree: true,
+        entryFee: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
           },
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 10,
         },
         _count: {
           select: {
@@ -86,6 +90,42 @@ const suitableForLabels: Record<string, string> = {
   SOLO: "انفرادی",
   KIDS: "کودکان",
 };
+
+// Generate metadata for better SEO and performance
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  try {
+    const { id } = await params;
+    const place = await db.touristPlace.findUnique({
+      where: { id },
+      select: {
+        name: true,
+        description: true,
+      },
+    });
+
+    if (!place) {
+      return {
+        title: "مکان یافت نشد",
+      };
+    }
+
+    return {
+      title: place.name,
+      description: place.description || `اطلاعات مکان ${place.name}`,
+    };
+  } catch (error) {
+    // اگر خطای دیتابیس بود، metadata پیش‌فرض برمی‌گردانیم
+    console.error("Error generating metadata:", error);
+    return {
+      title: "مکان گردشگری",
+      description: "اطلاعات مکان گردشگری",
+    };
+  }
+}
 
 export default async function PlaceDetailPage({
   params,
@@ -267,74 +307,18 @@ export default async function PlaceDetailPage({
           </CardContent>
         </Card>
 
-        {/* Reviews */}
-        <Card className="border-2 border-orange-100">
-          <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 border-b">
+        {/* Comments Section */}
+        <Card className="border-2 border-blue-100">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Star className="h-5 w-5 text-orange-600" />
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <MessageCircle className="h-5 w-5 text-blue-600" />
               </div>
-              <CardTitle>نظرات ({place.reviews.length})</CardTitle>
+              <CardTitle>کامنت‌ها</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            {place.reviews.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="p-4 bg-muted rounded-full mb-4">
-                  <Star className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-center text-muted-foreground font-medium">
-                  هنوز نظری ثبت نشده است
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {place.reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="border-b border-muted last:border-0 pb-4 last:pb-0"
-                  >
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-emerald-100 text-emerald-700 text-lg font-semibold">
-                          {review.user.name ? review.user.name[0] : "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">
-                              {review.user.name || "کاربر"}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-4 w-4 ${
-                                    i < review.rating
-                                      ? "fill-yellow-400 text-yellow-400"
-                                      : "text-gray-300"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Clock className="h-3.5 w-3.5" />
-                            {formatDate(review.createdAt)}
-                          </div>
-                        </div>
-                        {review.comment && (
-                          <p className="text-muted-foreground leading-relaxed">
-                            {review.comment}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <CommentsSectionWrapper itemType="PLACE" placeId={place.id} />
           </CardContent>
         </Card>
       </div>

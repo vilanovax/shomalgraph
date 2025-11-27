@@ -25,7 +25,7 @@ interface TemplateListClientProps {
     title: string;
     description?: string | null;
     icon?: string | null;
-    travelType: string;
+    travelType: string | null;
     season?: string | null;
     isActive: boolean;
     createdAt: Date;

@@ -217,9 +217,12 @@ export async function seedPlaces() {
     const existingSlugSet = new Set(existingSlugs.map((p) => p.slug));
 
     // فقط مکان‌هایی که وجود ندارند را اضافه می‌کنیم
-    const placesToCreate = samplePlaces.filter(
-      (p) => !existingSlugSet.has(p.slug)
-    );
+    const placesToCreate = samplePlaces
+      .filter((p) => !existingSlugSet.has(p.slug))
+      .map((p) => ({
+        ...p,
+        suitableFor: [...p.suitableFor], // تبدیل readonly array به mutable array
+      }));
 
     if (placesToCreate.length === 0) {
       return {

@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
                 templateItemId: item.id,
               }))
             : items && Array.isArray(items)
-            ? items.map((item: { name: string; description?: string; isRequired?: boolean }, index: number) => ({
+            ? items.map((item: { name: string; description?: string; isRequired?: boolean; order?: number }, index: number) => ({
                 name: item.name,
                 description: item.description || null,
                 order: item.order !== undefined ? item.order : index,

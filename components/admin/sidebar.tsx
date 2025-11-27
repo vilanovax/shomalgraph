@@ -13,6 +13,8 @@ import {
   Settings,
   List,
   BookOpen,
+  Shield,
+  MessageCircle,
 } from "lucide-react";
 
 const menuItems = [
@@ -60,6 +62,16 @@ const menuItems = [
     title: "نظرات",
     href: "/admin/reviews",
     icon: FileText,
+  },
+  {
+    title: "کامنت‌ها",
+    href: "/admin/comments",
+    icon: MessageCircle,
+  },
+  {
+    title: "کلمات بد",
+    href: "/admin/bad-words",
+    icon: Shield,
   },
   {
     title: "تنظیمات",
